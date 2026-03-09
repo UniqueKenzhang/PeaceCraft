@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>《天平之祭》- 龙王大人的游戏原型</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .scene-card { transition: all 0.3s; }
+        .active-tab { border-bottom: 4px solid #f59e0b; color: #f59e0b; }
+    </style>
+</head>
+<body class="bg-gray-900 text-white font-sans">
+    <div id="app" class="max-w-4xl mx-auto p-6">
+        <header class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-amber-500">🏛️ 天平之祭 (Sacrifice of Equilibrium)</h1>
+            <p class="text-gray-400 mt-2">平衡即是慈悲，搞怪即是救赎</p>
+        </header>
+
+        <!-- 场景切换 Tab -->
+        <nav class="flex justify-around mb-8 border-b border-gray-700">
+            <button onclick="changeScene('human')" id="tab-human" class="pb-2 text-xl active-tab">🛡️ 人类国度</button>
+            <button onclick="changeScene('battle')" id="tab-battle" class="pb-2 text-xl">⚔️ 终焉战场</button>
+            <button onclick="changeScene('demon')" id="tab-demon" class="pb-2 text-xl">🔥 魔族领地</button>
+        </nav>
+
+        <!-- 人类国度 -->
+        <div id="scene-human" class="scene-content space-y-6">
+            <div class="grid grid-cols-2 gap-4">
+                <div class="bg-blue-900 p-4 rounded-lg">
+                    <h3 class="text-blue-300">领地人口</h3>
+                    <p id="h-pop" class="text-3xl font-mono">100</p>
+                </div>
+                <div class="bg-blue-900 p-4 rounded-lg">
+                    <h3 class="text-blue-300">储备粮食</h3>
+                    <p id="h-food" class="text-3xl font-mono">500</p>
+                </div>
+            </div>
+            <div class="bg-gray-800 p-6 rounded-xl">
+                <h3 class="mb-4">📦 战备物资填装</h3>
+                <div class="space-y-4">
+                    <label class="block">真货比例: <input type="range" id="h-true" class="w-full"></label>
+                    <label class="block">搞怪货比例 (救人): <input type="range" id="h-funny" class="w-full"></label>
+                    <button onclick="sendSupply('human')" class="w-full bg-blue-600 py-2 rounded font-bold hover:bg-blue-500">发起补给</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 战场（简化版） -->
+        <div id="scene-battle" class="scene-content hidden space-y-8">
+            <div class="relative pt-1">
+                <p class="text-center mb-2">力量天平 (平衡安全区: 40% - 60%)</p>
+                <div class="overflow-hidden h-8 mb-4 text-xs flex rounded bg-gray-700 border-2 border-amber-900">
+                    <div id="balance-bar" style="width:50%" class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-amber-600 transition-all duration-500"></div>
+                </div>
+                <div class="flex justify-between px-2">
+                    <span class="text-blue-400">人类势</span>
+                    <span class="text-red-400">魔族势</span>
+                </div>
+            </div>
+            <div class="bg-gray-800 p-4 rounded h-48 flex items-center justify-center border-dashed border-2 border-gray-600">
+                <p class="text-gray-500 italic">实时战斗画面渲染中...</p>
+            </div>
+        </div>
+
+        <!-- 魔族领地 -->
+        <div id="scene-demon" class="scene-content hidden space-y-6">
+            <div class="grid grid-cols-2 gap-4">
+                <div class="bg-red-900 p-4 rounded-lg">
+                    <h3 class="text-red-300">魔众数量</h3>
+                    <p id="d-pop" class="text-3xl font-mono">100</p>
+                </div>
+                <div class="bg-red-900 p-4 rounded-lg">
+                    <h3 class="text-red-300">储备肉食</h3>
+                    <p id="d-meat" class="text-3xl font-mono">500</p>
+                </div>
+            </div>
+            <button class="w-full bg-red-700 py-4 rounded text-xl font-bold">研发搞怪武器：惊吓地雷</button>
+        </div>
+    </div>
+
+    <script>
+        function changeScene(scene) {
+            document.querySelectorAll('.scene-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('nav button').forEach(el => el.classList.remove('active-tab'));
+            
+            document.getElementById('scene-' + scene).classList.remove('hidden');
+            document.getElementById('tab-' + scene).classList.add('active-tab');
+        }
+
+        function sendSupply(target) {
+            alert("指令已传达！正在利用搞怪货偷渡士兵...");
+            // 这里未来对接后端 API
+        }
+
+        // 模拟数据更新
+        setInterval(() => {
+            const hPop = document.getElementById('h-pop');
+            hPop.innerText = parseInt(hPop.innerText) + 1;
+            const bar = document.getElementById('balance-bar');
+            const randomVar = Math.sin(Date.now() / 1000) * 10 + 50;
+            bar.style.width = randomVar + "%";
+        }, 2000);
+    </script>
+</body>
+</html>
