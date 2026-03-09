@@ -194,8 +194,11 @@
             },
 
             init() {
-                this.updateSliders('human'); this.updateSliders('demon');
-                this.loop(); this.updateUI();
+                console.log("Game Initializing...");
+                this.updateSliders('human'); 
+                this.updateSliders('demon');
+                this.loop(); 
+                this.updateUI();
             },
 
             switchScene(scene) {
@@ -335,12 +338,23 @@
             },
 
             loop() {
+                console.log("Loop started");
                 let ticks = 0;
                 setInterval(() => {
                     if (this.state.isGameOver) return;
                     ticks++;
-                    const h = this.state.human, d = this.state.demon;
-                    // 消耗逻辑
+                    const h = this.state.human, d = this.state.demon, b = this.state.battle;
+
+                    // 1. 自动推演战场战力损耗 (模拟持续交战)
+                    // 每秒双方战力都会发生随机波动
+                    b.hForce += (Math.random() * 10 - 5);
+                    b.dForce += (Math.random() * 10 - 5);
+                    
+                    // 确保战力不低于基础值
+                    b.hForce = Math.max(100, b.hForce);
+                    b.dForce = Math.max(100, b.dForce);
+
+                    // 2. Anno式需求与阶层升级逻辑
                     h.food -= h.pop * 0.1;
                     if (h.buildings.farm >= 3 && h.food > 500 && h.tiers.peasant > 0) { h.tiers.peasant--; h.tiers.citizen++; }
                     if (h.food <= 0) { h.food = 0; if (h.pop > 10) h.pop--; }
@@ -361,8 +375,6 @@
                     d.bone += (d.pop * 0.05 + d.buildings.rift * 5) * dMult;
                     d.mana += (d.pop * 0.02 + d.buildings.altar * 3) * dMult;
 
-                    this.state.battle.hForce = Math.max(100, this.state.battle.hForce - 1);
-                    this.state.battle.dForce = Math.max(100, this.state.battle.dForce - 1);
                     if (ticks % 30 === 0 && Math.random() > 0.5) this.triggerEdict();
                     this.updateUI();
                 }, 1000);
