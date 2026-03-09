@@ -170,7 +170,9 @@
                     buildings: { pit: 0, altar: 0, rift: 0 }
                 },
                 battle: { hForce: 500, dForce: 500, peaceScore: 0 },
-                activeScene: 'human'
+                activeScene: 'human',
+                doomsdayTimer: null,
+                isGameOver: false
             },
 
             init() {
@@ -278,6 +280,8 @@
             },
 
             updateUI() {
+                if (this.state.isGameOver) return;
+
                 // 更新人口与资源
                 document.getElementById('ui-h-pop').innerText = this.state.human.pop;
                 document.getElementById('ui-h-food').innerText = Math.floor(this.state.human.food);
@@ -309,17 +313,40 @@
                 hUnit.style.left = `${balance * 0.8}%`;
                 dUnit.style.right = `${(100 - balance) * 0.8}%`;
 
-                // 警告提示
+                // 任务 5.1：末日倒计时逻辑
                 const warning = document.getElementById('ui-warning');
-                if (balance < 35 || balance > 65) {
-                    warning.classList.remove('text-slate-500');
-                    warning.classList.add('text-red-500', 'animate-bounce');
-                    warning.innerText = "🚨 极度危险：一方文明即将启动终极手段！";
+                if (balance < 25 || balance > 75) {
+                    if (!this.state.doomsdayTimer) {
+                        this.state.doomsdayTimer = 10;
+                        this.log("🚨 警告：平衡彻底崩溃！末日倒计时开始...");
+                    }
+                    this.state.doomsdayTimer -= 0.5; // 因为updateUI每秒调用频率受loop影响
+                    warning.innerText = `💥 世界毁灭倒计时: ${Math.ceil(this.state.doomsdayTimer)}s 💥`;
+                    warning.className = "text-red-500 font-black text-2xl animate-ping";
+                    
+                    if (this.state.doomsdayTimer <= 0) {
+                        this.gameOver("由于大人未能维持平衡，战争演变为相互毁灭的屠杀。");
+                    }
                 } else {
-                    warning.classList.remove('text-red-500', 'animate-bounce');
-                    warning.classList.add('text-amber-600');
+                    this.state.doomsdayTimer = null;
+                    warning.className = "text-amber-600 text-xs font-bold animate-pulse";
                     warning.innerText = "! 平衡偏离安全区 (40-60%) 将触发灭世警告 !";
                 }
+            },
+
+            gameOver(reason) {
+                this.state.isGameOver = true;
+                this.state.running = false;
+                document.body.innerHTML = `
+                    <div class="flex items-center justify-center h-screen bg-black text-white text-center p-8">
+                        <div class="space-y-8">
+                            <h1 class="text-6xl font-black text-red-600">世界终焉</h1>
+                            <p class="text-2xl text-gray-400">${reason}</p>
+                            <div class="text-4xl">最终和平溢价: <span class="text-green-400">${this.state.battle.peaceScore}</span></div>
+                            <button onclick="location.reload()" class="bg-gray-800 px-8 py-4 rounded-xl border border-gray-600 hover:bg-white hover:text-black transition-all">重新开启轮回</button>
+                        </div>
+                    </div>
+                `;
             },
 
             loop() {
