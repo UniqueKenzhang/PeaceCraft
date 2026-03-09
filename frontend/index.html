@@ -2,120 +2,112 @@
 <html lang="zh">
 <head>
     <meta charset="UTF-8">
-    <title>PeaceCraft - 龙王大人的和平博弈</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PeaceCraft - 龙王大人的单机和平博弈</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        .scene-card { transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@700;900&family=Roboto+Mono:wght@400;700&display=swap');
+        body { font-family: 'ui-sans-serif', system-ui; }
+        .stat-font { font-family: 'Roboto Mono', monospace; }
+        .scene-transition { transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
         .active-tab { border-bottom: 4px solid #fbbf24; color: #fbbf24; background: rgba(251, 191, 36, 0.1); }
-        .stat-value { font-family: 'Courier New', Courier, monospace; }
-        .human-theme { background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); }
-        .demon-theme { background: linear-gradient(135deg, #450a0a 0%, #991b1b 100%); }
+        input[type=range]::-webkit-slider-runnable-track { background: #374151; height: 8px; border-radius: 4px; }
+        input[type=range]::-webkit-slider-thumb { margin-top: -4px; }
     </style>
 </head>
-<body class="bg-gray-900 text-white min-h-screen">
-    <div id="app" class="max-w-5xl mx-auto p-4 md:p-8">
-        <header class="flex justify-between items-center mb-8 border-b border-gray-800 pb-4">
+<body class="bg-[#0f172a] text-gray-100 min-h-screen">
+    <div id="game-app" class="max-w-4xl mx-auto p-4 md:p-8">
+        <!-- 顶栏：龙王的视野 -->
+        <header class="flex justify-between items-end mb-8 border-b border-slate-800 pb-6">
             <div>
-                <h1 class="text-3xl font-black text-amber-500 tracking-tighter">PEACECRAFT <span class="text-sm font-normal text-gray-500">v1.1</span></h1>
-                <p class="text-xs text-gray-400">大内总管：虾总管 呈报</p>
+                <h1 class="text-4xl font-black text-amber-500 tracking-tighter">PEACECRAFT</h1>
+                <p class="text-xs text-slate-500 mt-1 uppercase tracking-widest">虾总管：单机逻辑 1.0 版 呈报</p>
             </div>
             <div class="text-right">
-                <div class="text-xs text-gray-500 uppercase">和平溢价</div>
-                <div id="global-peace-score" class="text-2xl font-bold text-green-400">0</div>
+                <div class="text-[10px] text-slate-500 uppercase font-bold">和平溢价 (Peace Score)</div>
+                <div id="ui-peace-score" class="text-3xl font-black text-green-400 stat-font">0</div>
             </div>
         </header>
 
         <!-- 场景导航 -->
-        <nav class="grid grid-cols-3 gap-2 mb-8 bg-gray-800 p-1 rounded-xl">
-            <button onclick="changeScene('human')" id="tab-human" class="py-3 rounded-lg font-bold transition-all active-tab">🛡️ 人类领地</button>
-            <button onclick="changeScene('battle')" id="tab-battle" class="py-3 rounded-lg font-bold transition-all">⚔️ 终焉战场</button>
-            <button onclick="changeScene('demon')" id="tab-demon" class="py-3 rounded-lg font-bold transition-all">🔥 魔族深渊</button>
+        <nav class="grid grid-cols-3 gap-2 mb-8 bg-slate-900/50 p-1 rounded-2xl border border-slate-800">
+            <button onclick="Game.switchScene('human')" id="tab-human" class="py-4 rounded-xl font-bold transition-all active-tab">🛡️ 人类领地</button>
+            <button onclick="Game.switchScene('battle')" id="tab-battle" class="py-4 rounded-xl font-bold transition-all">⚔️ 终焉战场</button>
+            <button onclick="Game.switchScene('demon')" id="tab-demon" class="py-4 rounded-xl font-bold transition-all">🔥 魔族深渊</button>
         </nav>
 
-        <!-- 内容区域 -->
-        <main class="grid grid-cols-1 gap-8">
-            <!-- 场景 A：人类 -->
+        <!-- 动态场景容器 -->
+        <main id="main-stage">
+            <!-- 人类场景 -->
             <div id="scene-human" class="scene-content space-y-6">
-                <div class="grid grid-cols-3 gap-4">
-                    <div class="bg-blue-900/40 border border-blue-500/30 p-4 rounded-2xl">
-                        <div class="text-blue-400 text-xs mb-1">人口</div>
-                        <div id="h-pop" class="text-3xl font-bold stat-value">100</div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-blue-950/30 border border-blue-500/20 p-6 rounded-3xl shadow-inner">
+                        <div class="text-blue-400 text-xs font-bold mb-2 uppercase">领地人口</div>
+                        <div id="ui-h-pop" class="text-4xl font-black stat-font">100</div>
                     </div>
-                    <div class="bg-blue-900/40 border border-blue-500/30 p-4 rounded-2xl">
-                        <div class="text-blue-400 text-xs mb-1">储备粮食</div>
-                        <div id="h-food" class="text-3xl font-bold stat-value">500</div>
-                    </div>
-                    <div class="bg-blue-900/40 border border-blue-500/30 p-4 rounded-2xl">
-                        <div class="text-blue-400 text-xs mb-1">民心</div>
-                        <div id="h-morale" class="text-3xl font-bold stat-value text-green-400">100</div>
+                    <div class="bg-blue-950/30 border border-blue-500/20 p-6 rounded-3xl shadow-inner">
+                        <div class="text-blue-400 text-xs font-bold mb-2 uppercase">储备粮食</div>
+                        <div id="ui-h-food" class="text-4xl font-black stat-font text-blue-200">500</div>
                     </div>
                 </div>
-                
-                <!-- 补给控制台 -->
-                <div class="bg-gray-800 p-8 rounded-3xl border border-gray-700 shadow-2xl">
-                    <h2 class="text-xl font-bold mb-6 flex items-center">📦 皇家物资调拨 <span class="ml-2 text-xs font-normal text-gray-500">(人类前线)</span></h2>
-                    <div class="space-y-8">
-                        <div>
-                            <div class="flex justify-between text-sm mb-2"><span>真货 (提升战力)</span><span id="h-true-label">33%</span></div>
-                            <input type="range" id="h-true-range" min="0" max="100" value="33" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-500">
+                <div class="bg-slate-900 p-8 rounded-[2.5rem] border border-slate-800 shadow-2xl">
+                    <h2 class="text-xl font-bold mb-8 text-blue-400 flex items-center">📦 物资调拨：人类前线</h2>
+                    <div class="space-y-10">
+                        <div class="space-y-4">
+                            <div class="flex justify-between font-bold text-sm"><span>真货比例 (战斗)</span><span id="ui-h-true-val" class="text-blue-500">33%</span></div>
+                            <input type="range" id="input-h-true" oninput="Game.updateSliders('h')" class="w-full appearance-none bg-transparent cursor-pointer accent-blue-500">
                         </div>
-                        <div>
-                            <div class="flex justify-between text-sm mb-2 text-green-400"><span>搞怪货 (救回逃兵)</span><span id="h-funny-label">33%</span></div>
-                            <input type="range" id="h-funny-range" min="0" max="100" value="33" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-green-500">
+                        <div class="space-y-4 text-green-400">
+                            <div class="flex justify-between font-bold text-sm"><span>搞怪武器 (救人)</span><span id="ui-h-funny-val">33%</span></div>
+                            <input type="range" id="input-h-funny" oninput="Game.updateSliders('h')" class="w-full appearance-none bg-transparent cursor-pointer accent-green-500">
                         </div>
-                        <button onclick="sendSupply('human')" class="w-full bg-blue-600 hover:bg-blue-500 py-4 rounded-xl font-black text-lg transition-transform active:scale-95 shadow-lg">发起秘密补给</button>
+                        <button onclick="Game.executeSupply('human')" class="w-full bg-blue-600 hover:bg-blue-500 py-5 rounded-2xl font-black text-xl shadow-lg transition-transform active:scale-95">发起秘密补给</button>
                     </div>
                 </div>
             </div>
 
-            <!-- 场景 B：战场 -->
-            <div id="scene-battle" class="scene-content hidden space-y-12">
-                <div class="text-center">
-                    <div class="text-sm text-gray-500 mb-4 uppercase tracking-widest">力量平衡监控</div>
-                    <div class="relative h-12 bg-gray-800 rounded-full border-4 border-gray-700 overflow-hidden shadow-inner">
-                        <div id="balance-bar" style="width: 50%;" class="h-full bg-gradient-to-r from-blue-600 via-amber-500 to-red-600 transition-all duration-1000 ease-in-out"></div>
-                        <div class="absolute inset-0 flex justify-between items-center px-6 font-black text-sm">
-                            <span>HUMAN</span>
-                            <span>DEMON</span>
+            <!-- 战场场景 -->
+            <div id="scene-battle" class="scene-content hidden space-y-12 py-10">
+                <div class="text-center space-y-6">
+                    <h3 class="text-slate-500 font-bold uppercase tracking-[0.3em] text-sm">力量平衡天平</h3>
+                    <div class="relative h-16 bg-slate-950 rounded-2xl border-4 border-slate-800 overflow-hidden flex items-center">
+                        <div id="ui-balance-bar" class="h-full bg-gradient-to-r from-blue-600 via-amber-500 to-red-600 transition-all duration-700 shadow-[0_0_20px_rgba(245,158,11,0.2)]" style="width: 50%;"></div>
+                        <div class="absolute inset-0 flex justify-between items-center px-10 font-black italic tracking-tighter text-lg mix-blend-overlay">
+                            <span>ALLIANCE</span>
+                            <span>LEGION</span>
                         </div>
                     </div>
-                    <div class="mt-4 text-amber-500 text-xs">警告：平衡偏离 70% 将触发末日终结</div>
+                    <p class="text-amber-600 text-xs font-bold animate-pulse">! 平衡偏离安全区 (40-60%) 将触发灭世警告 !</p>
                 </div>
-                
-                <div id="battle-log" class="bg-black/50 p-6 rounded-2xl h-64 overflow-y-auto font-mono text-sm text-gray-400 border border-gray-800">
-                    <p class="text-amber-900">> 正在连接战场监视器...</p>
-                    <p class="text-gray-600">> [14:20] 人类方尝试用生锈的长剑进行格挡...</p>
+                <div id="ui-battle-log" class="bg-black/40 rounded-3xl p-6 h-60 overflow-y-auto font-mono text-sm text-slate-500 border border-slate-800/50 leading-relaxed">
+                    <p class="text-slate-700">> [SYSTEM] 战场监控已就绪...</p>
                 </div>
             </div>
 
-            <!-- 场景 C：魔族 (结构同人类，颜色不同) -->
+            <!-- 魔族场景 (结构同人类) -->
             <div id="scene-demon" class="scene-content hidden space-y-6">
-                <div class="grid grid-cols-3 gap-4">
-                    <div class="bg-red-900/40 border border-red-500/30 p-4 rounded-2xl text-center">
-                        <div class="text-red-400 text-xs mb-1">魔众</div>
-                        <div id="d-pop" class="text-3xl font-bold stat-value">100</div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-red-950/20 border border-red-500/20 p-6 rounded-3xl">
+                        <div class="text-red-500 text-xs font-bold mb-2 uppercase">魔众数量</div>
+                        <div id="ui-d-pop" class="text-4xl font-black stat-font">100</div>
                     </div>
-                    <div class="bg-red-900/40 border border-red-500/30 p-4 rounded-2xl text-center">
-                        <div class="text-red-400 text-xs mb-1">储备肉食</div>
-                        <div id="d-meat" class="text-3xl font-bold stat-value">500</div>
-                    </div>
-                    <div class="bg-red-900/40 border border-red-500/30 p-4 rounded-2xl text-center">
-                        <div class="text-red-400 text-xs mb-1">恐惧感</div>
-                        <div id="d-fear" class="text-3xl font-bold stat-value text-red-500">100</div>
+                    <div class="bg-red-950/20 border border-red-500/20 p-6 rounded-3xl">
+                        <div class="text-red-500 text-xs font-bold mb-2 uppercase">储备肉食</div>
+                        <div id="ui-d-meat" class="text-4xl font-black stat-font text-red-200">500</div>
                     </div>
                 </div>
-                <div class="bg-gray-800 p-8 rounded-3xl border border-gray-700 shadow-2xl">
-                    <h2 class="text-xl font-bold mb-6 flex items-center text-red-500">🔥 深渊物资调拨 <span class="ml-2 text-xs font-normal text-gray-500">(魔族前线)</span></h2>
-                    <div class="space-y-8">
-                        <div>
-                            <div class="flex justify-between text-sm mb-2"><span>深渊真货</span><span id="d-true-label">33%</span></div>
-                            <input type="range" id="d-true-range" min="0" max="100" value="33" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-red-600">
+                <div class="bg-slate-900 p-8 rounded-[2.5rem] border border-slate-800">
+                    <h2 class="text-xl font-bold mb-8 text-red-500 flex items-center">🔥 鲜血调拨：深渊前线</h2>
+                    <div class="space-y-10">
+                        <div class="space-y-4 text-red-500">
+                            <div class="flex justify-between font-bold text-sm"><span>深渊真货 (破坏)</span><span id="ui-d-true-val">33%</span></div>
+                            <input type="range" id="input-d-true" oninput="Game.updateSliders('d')" class="w-full appearance-none bg-transparent cursor-pointer accent-red-600">
                         </div>
-                        <div>
-                            <div class="flex justify-between text-sm mb-2 text-green-400"><span>滑稽恶作剧</span><span id="d-funny-label">33%</span></div>
-                            <input type="range" id="d-funny-range" min="0" max="100" value="33" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-green-500">
+                        <div class="space-y-4 text-green-400">
+                            <div class="flex justify-between font-bold text-sm"><span>滑稽恶作剧 (救人)</span><span id="ui-d-funny-val">33%</span></div>
+                            <input type="range" id="input-d-funny" oninput="Game.updateSliders('d')" class="w-full appearance-none bg-transparent cursor-pointer accent-green-500">
                         </div>
-                        <button onclick="sendSupply('demon')" class="w-full bg-red-700 hover:bg-red-600 py-4 rounded-xl font-black text-lg transition-transform active:scale-95 shadow-lg">发起秘密补给</button>
+                        <button onclick="Game.executeSupply('demon')" class="w-full bg-red-700 hover:bg-red-600 py-5 rounded-2xl font-black text-xl transition-all">发起黑暗补给</button>
                     </div>
                 </div>
             </div>
@@ -123,84 +115,97 @@
     </div>
 
     <script>
-        function changeScene(scene) {
-            document.querySelectorAll('.scene-content').forEach(el => el.classList.add('hidden'));
-            document.querySelectorAll('nav button').forEach(el => el.classList.remove('active-tab'));
-            document.getElementById('scene-' + scene).classList.remove('hidden');
-            document.getElementById('tab-' + scene).classList.add('active-tab');
-        }
+        // --- 虾总管单机版引擎：逻辑大一统 ---
+        const Game = {
+            state: {
+                human: { pop: 100, food: 500 },
+                demon: { pop: 100, meat: 500 },
+                battle: { hForce: 500, dForce: 500, peaceScore: 0 },
+                activeScene: 'human'
+            },
 
-        // 联动滑块更新
-        ['h', 'd'].forEach(side => {
-            const trueR = document.getElementById(`${side}-true-range`);
-            const funnyR = document.getElementById(`${side}-funny-range`);
-            const trueL = document.getElementById(`${side}-true-label`);
-            const funnyL = document.getElementById(`${side}-funny-label`);
+            init() {
+                this.loop();
+                console.log("PeaceCraft 单机内核已启动！");
+            },
 
-            const update = () => {
-                trueL.innerText = `${trueR.value}%`;
-                funnyL.innerText = `${funnyR.value}%`;
-            };
-            trueR.oninput = update;
-            funnyR.oninput = update;
-        });
+            switchScene(scene) {
+                this.state.activeScene = scene;
+                document.querySelectorAll('.scene-content').forEach(el => el.classList.add('hidden'));
+                document.querySelectorAll('nav button').forEach(el => el.classList.remove('active-tab'));
+                document.getElementById('scene-' + scene).classList.remove('hidden');
+                document.getElementById('tab-' + scene).classList.add('active-tab');
+            },
 
-        // --- 虾总管：真正的神兵联调逻辑 ---
-        const API_BASE = "http://43.128.68.5:18789/api"; // 指向龙王大人的高性能后端
+            updateSliders(side) {
+                const t = document.getElementById(`input-${side}-true`).value;
+                const f = document.getElementById(`input-${side}-funny`).value;
+                document.getElementById(`ui-${side}-true-val`).innerText = `${t}%`;
+                document.getElementById(`ui-${side}-funny-val`).innerText = `${f}%`;
+            },
 
-        async function syncState() {
-            try {
-                const res = await fetch(`${API_BASE}/state`);
-                const data = await res.json();
+            executeSupply(target) {
+                const t = document.getElementById(`input-${target[0]}-true`).value / 100;
+                const f = document.getElementById(`input-${target[0]}-funny`).value / 100;
+                const fake = Math.max(0, 1 - t - f);
+
+                // 核心逻辑搬迁：单机即时计算
+                if (target === 'human') {
+                    this.state.battle.hForce += t * 60;
+                    this.state.battle.hForce -= fake * 40;
+                    const saved = Math.floor(f * 30);
+                    this.state.human.pop += saved;
+                    this.state.battle.peaceScore += saved * 10;
+                    this.log(`人类补给抵达：由于搞怪，成功救回 ${saved} 名逃兵！`);
+                } else {
+                    this.state.battle.dForce += t * 60;
+                    this.state.battle.dForce -= fake * 40;
+                    const saved = Math.floor(f * 30);
+                    this.state.demon.pop += saved;
+                    this.state.battle.peaceScore += saved * 10;
+                    this.log(`魔族补给抵达：${saved} 个恶魔被逗笑了，加入了领地建设！`);
+                }
+                this.updateUI();
+            },
+
+            log(msg) {
+                const container = document.getElementById('ui-battle-log');
+                const p = document.createElement('p');
+                p.className = "mt-1 text-amber-400/80";
+                p.innerText = `> [${new Date().toLocaleTimeString()}] ${msg}`;
+                container.prepend(p);
+            },
+
+            updateUI() {
+                // 更新人口与资源
+                document.getElementById('ui-h-pop').innerText = this.state.human.pop;
+                document.getElementById('ui-h-food').innerText = Math.floor(this.state.human.food);
+                document.getElementById('ui-d-pop').innerText = this.state.demon.pop;
+                document.getElementById('ui-d-meat').innerText = Math.floor(this.state.demon.meat);
                 
-                // 更新人类数据
-                document.getElementById('h-pop').innerText = data.human.pop;
-                document.getElementById('h-food').innerText = data.human.food;
-                document.getElementById('h-morale').innerText = data.human.morale;
-                
-                // 更新魔族数据
-                document.getElementById('d-pop').innerText = data.demon.pop;
-                document.getElementById('d-meat').innerText = data.demon.meat;
-                document.getElementById('d-fear').innerText = data.demon.fear;
-                
-                // 更新战场
-                document.getElementById('balance-bar').style.width = data.battle.balance + "%";
-                document.getElementById('global-peace-score').innerText = data.battle.peace_score;
-            } catch (e) {
-                console.error("同步失败，请确保后端 main.py 已启动", e);
+                // 更新天平与和平分
+                const total = this.state.battle.hForce + this.state.battle.dForce;
+                const balance = (this.state.battle.hForce / total) * 100;
+                document.getElementById('ui-balance-bar').style.width = `${balance}%`;
+                document.getElementById('ui-peace-score').innerText = this.state.battle.peaceScore;
+            },
+
+            loop() {
+                setInterval(() => {
+                    // 全效同步产出逻辑
+                    this.state.human.food += this.state.human.pop * 0.15;
+                    this.state.demon.meat += this.state.demon.pop * 0.15;
+                    
+                    // 战力随时间缓慢损耗 (模拟战争)
+                    this.state.battle.hForce = Math.max(100, this.state.battle.hForce - 1);
+                    this.state.battle.dForce = Math.max(100, this.state.battle.dForce - 1);
+                    
+                    this.updateUI();
+                }, 1000);
             }
-        }
+        };
 
-        async function sendSupply(target) {
-            const t = document.getElementById(`${target[0]}-true-range`).value / 100;
-            const f = document.getElementById(`${target[0]}-funny-range`).value / 100;
-            
-            const log = document.getElementById('battle-log');
-            const p = document.createElement('p');
-            p.className = "text-amber-400 mt-2";
-            p.innerText = `> [${new Date().toLocaleTimeString()}] 正在调拨物资...`;
-            log.prepend(p);
-
-            try {
-                const res = await fetch(`${API_BASE}/supply`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({
-                        target: target,
-                        true_ratio: t,
-                        funny_ratio: f
-                    })
-                });
-                const result = await res.json();
-                alert(result.msg);
-            } catch (e) {
-                alert("补给线被截断，请检查网络！");
-            }
-        }
-
-        // 龙王大人，同步频率设为每 2 秒一次，既能看到实时变动，又不给后端增加压力
-        setInterval(syncState, 2000);
-        function max(a,b){return a>b?a:b}
+        Game.init();
     </script>
 </body>
 </html>
