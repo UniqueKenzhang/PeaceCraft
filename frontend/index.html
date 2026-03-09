@@ -17,6 +17,18 @@
 </head>
 <body class="bg-[#0f172a] text-gray-100 min-h-screen">
     <div id="game-app" class="max-w-4xl mx-auto p-4 md:p-8">
+        <!-- 任务 5.2：帝国诏令浮层 -->
+        <div id="ui-edict-overlay" class="hidden fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-6">
+            <div class="bg-amber-100 text-amber-900 p-8 rounded-3xl max-w-md w-full shadow-[0_0_50px_rgba(251,191,36,0.4)] border-8 border-amber-600">
+                <h2 id="ui-edict-title" class="text-3xl font-black mb-4 text-center border-b-2 border-amber-300 pb-2">📜 帝国密诏</h2>
+                <p id="ui-edict-content" class="text-lg leading-relaxed mb-8 italic">"人类皇室要求本领地立即上缴 1000 粮食以供远征军开销！"</p>
+                <div class="grid grid-cols-2 gap-4">
+                    <button onclick="Game.respondToEdict(true)" class="bg-green-700 text-white py-4 rounded-xl font-bold hover:bg-green-800 transition-all">遵命 (消耗资源)</button>
+                    <button onclick="Game.respondToEdict(false)" class="bg-red-700 text-white py-4 rounded-xl font-bold hover:bg-red-800 transition-all">抗旨 (战力剧变)</button>
+                </div>
+            </div>
+        </div>
+
         <!-- 顶栏：龙王的视野 -->
         <header class="flex justify-between items-end mb-8 border-b border-slate-800 pb-6">
             <div>
@@ -172,7 +184,8 @@
                 battle: { hForce: 500, dForce: 500, peaceScore: 0 },
                 activeScene: 'human',
                 doomsdayTimer: null,
-                isGameOver: false
+                isGameOver: false,
+                edict: null // 任务 5.2：帝国诏令状态
             },
 
             init() {
@@ -225,6 +238,7 @@
             },
 
             executeSupply(target) {
+                if (this.state.isGameOver) return;
                 const t = document.getElementById(`input-${target[0]}-true`).value / 100;
                 const f = document.getElementById(`input-${target[0]}-funny`).value / 100;
                 const fake = Math.max(0, 1 - t - f);
@@ -233,6 +247,7 @@
 
                 // 任务 3.3：延迟抵达逻辑
                 setTimeout(() => {
+                    if (this.state.isGameOver) return;
                     const sideKey = target === 'human' ? 'hForce' : 'dForce';
                     
                     // 1. 真货：稳健提升战力
@@ -245,12 +260,13 @@
                     if (fake > 0.3) this.log(`${target === 'human' ? '人类' : '魔族'}由于领到大量物资，战力虚假暴涨！`);
                     
                     setTimeout(() => {
+                        if (this.state.isGameOver) return;
                         this.state.battle[sideKey] -= (fakeBoost + fake * 100);
                         if (fake > 0.3) this.log(`⚠️ 警报！${target === 'human' ? '人类' : '魔族'}的补给中发现大量假货，战力发生崩盘！`);
                         this.updateUI();
                     }, 5000);
 
-                    // 任务 4.2：搞怪逻辑强化 (专属对白与逃兵转化)
+                    // 任务 4.2：搞怪逻辑强化 (逃兵转化)
                     const saved = Math.floor(f * 35);
                     if (saved > 0) {
                         const quotes = target === 'human' 
@@ -269,6 +285,39 @@
                     
                     this.updateUI();
                 }, 3000);
+            },
+
+            triggerEdict() {
+                const isHuman = Math.random() > 0.5;
+                const resource = isHuman ? 'food' : 'meat';
+                const amount = Math.floor(this.state[isHuman ? 'human' : 'demon'][resource] * 0.4 + 200);
+                
+                this.state.edict = { side: isHuman ? 'human' : 'demon', res: resource, amt: amount };
+                
+                document.getElementById('ui-edict-title').innerText = isHuman ? "📜 皇室摊派令" : "📜 深渊征召令";
+                document.getElementById('ui-edict-content').innerText = `"${isHuman ? '人类皇帝' : '魔王大人'}要求你立即上缴 ${amount} ${isHuman ? '粮食' : '肉食'}，以支撑前线血战！"`;
+                document.getElementById('ui-edict-overlay').classList.remove('hidden');
+            },
+
+            respondToEdict(accept) {
+                const edict = this.state.edict;
+                if (accept) {
+                    if (this.state[edict.side][edict.res] >= edict.amt) {
+                        this.state[edict.side][edict.res] -= edict.amt;
+                        this.log(`大人选择了服从，${edict.amt} 物资已秘密运往后方。`);
+                    } else {
+                        alert("资源不足，不得不抗旨！");
+                        this.respondToEdict(false);
+                        return;
+                    }
+                } else {
+                    const sideKey = edict.side === 'human' ? 'hForce' : 'dForce';
+                    this.state.battle[sideKey] -= 150; // 抗旨导致士兵因绝望而战力大减，强行打破平衡
+                    this.log(`大人选择了抗旨！远方的领袖大怒，削减了对本领地的支持，战力发生剧变！`);
+                }
+                document.getElementById('ui-edict-overlay').classList.add('hidden');
+                this.state.edict = null;
+                this.updateUI();
             },
 
             log(msg) {
