@@ -113,6 +113,25 @@
                     </div>
                 </div>
                 <div class="bg-slate-900 p-8 rounded-[2.5rem] border border-slate-800">
+                    <h2 class="text-xl font-bold mb-4 text-red-500 flex items-center">🏗️ 深渊建设：魔族生产链</h2>
+                    <div class="grid grid-cols-3 gap-4 mb-8">
+                        <button onclick="Game.build('demon', 'pit')" class="bg-red-900/20 hover:bg-red-900/40 p-4 rounded-2xl border border-red-500/20 transition-all text-left group">
+                            <div class="text-xl mb-1 text-white group-hover:scale-110 transition-transform">🥩 腐肉池</div>
+                            <div class="text-[10px] text-red-300">成本: 50 白骨</div>
+                            <div class="text-xs font-bold mt-2">已建: <span id="ui-d-pit-count">0</span></div>
+                        </button>
+                        <button onclick="Game.build('demon', 'altar')" class="bg-red-900/20 hover:bg-red-900/40 p-4 rounded-2xl border border-red-500/20 transition-all text-left group">
+                            <div class="text-xl mb-1 text-white group-hover:scale-110 transition-transform">💀 骸骨祭坛</div>
+                            <div class="text-[10px] text-red-300">成本: 100 魔能</div>
+                            <div class="text-xs font-bold mt-2">已建: <span id="ui-d-altar-count">0</span></div>
+                        </button>
+                        <button onclick="Game.build('demon', 'rift')" class="bg-red-900/20 hover:bg-red-900/40 p-4 rounded-2xl border border-red-500/20 transition-all text-left group">
+                            <div class="text-xl mb-1 text-white group-hover:scale-110 transition-transform">🌀 魔能裂隙</div>
+                            <div class="text-[10px] text-red-300">成本: 150 白骨</div>
+                            <div class="text-xs font-bold mt-2">已建: <span id="ui-d-rift-count">0</span></div>
+                        </button>
+                    </div>
+
                     <h2 class="text-xl font-bold mb-8 text-red-500 flex items-center">🔥 鲜血调拨：深渊前线</h2>
                     <div class="space-y-10">
                         <div class="space-y-4 text-red-500">
@@ -168,11 +187,18 @@
 
             build(side, type) {
                 const costs = {
-                    farm: { wood: 50 },
-                    sawmill: { stone: 100 },
-                    quarry: { wood: 150 }
+                    human: {
+                        farm: { wood: 50 },
+                        sawmill: { stone: 100 },
+                        quarry: { wood: 150 }
+                    },
+                    demon: {
+                        pit: { bone: 50 },
+                        altar: { mana: 100 },
+                        rift: { bone: 150 }
+                    }
                 };
-                const cost = costs[type];
+                const cost = costs[side][type];
                 let canBuild = true;
                 for (let res in cost) {
                     if (this.state[side][res] < cost[res]) canBuild = false;
@@ -235,6 +261,10 @@
                 document.getElementById('ui-d-meat').innerText = Math.floor(this.state.demon.meat);
                 document.getElementById('ui-d-bone').innerText = Math.floor(this.state.demon.bone);
                 document.getElementById('ui-d-mana').innerText = Math.floor(this.state.demon.mana);
+
+                document.getElementById('ui-d-pit-count').innerText = this.state.demon.buildings.pit;
+                document.getElementById('ui-d-altar-count').innerText = this.state.demon.buildings.altar;
+                document.getElementById('ui-d-rift-count').innerText = this.state.demon.buildings.rift;
                 
                 // 更新天平与和平分
                 const total = this.state.battle.hForce + this.state.battle.dForce;
@@ -251,9 +281,9 @@
                     this.state.human.wood += (this.state.human.pop * 0.05) + (this.state.human.buildings.sawmill * 5);
                     this.state.human.stone += (this.state.human.pop * 0.02) + (this.state.human.buildings.quarry * 3);
 
-                    this.state.demon.meat += this.state.demon.pop * 0.15;
-                    this.state.demon.bone += this.state.demon.pop * 0.05;
-                    this.state.demon.mana += this.state.demon.pop * 0.02;
+                    this.state.demon.meat += (this.state.demon.pop * 0.15) + (this.state.demon.buildings.pit * 2);
+                    this.state.demon.bone += (this.state.demon.pop * 0.05) + (this.state.demon.buildings.rift * 5);
+                    this.state.demon.mana += (this.state.demon.pop * 0.02) + (this.state.demon.buildings.altar * 3);
                     
                     // 战力随时间缓慢损耗 (模拟战争)
                     this.state.battle.hForce = Math.max(100, this.state.battle.hForce - 1);
