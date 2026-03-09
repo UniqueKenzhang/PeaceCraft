@@ -3,548 +3,474 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PeaceCraft - 天平之祭</title>
+    <title>PeaceCraft - 天平之祭 (Anno Builder Edition)</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Crimson+Pro:wght@300;400;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Noto+Sans+SC:wght@300;400;700&display=swap');
-        :root { --accent: #f59e0b; --alliance: #2563eb; --legion: #dc2626; }
-        body { font-family: 'Noto Sans SC', sans-serif; background-color: #020617; color: #f8fafc; overflow: hidden; }
+        :root {
+            --bg-dark: #0f172a;
+            --bg-panel: #1e293b;
+            --gold: #c9a84c;
+            --gold-bright: #e8c84a;
+            --alliance: #2563eb;
+            --legion: #dc2626;
+        }
+        body { 
+            font-family: 'Crimson Pro', serif; 
+            background-color: var(--bg-dark); 
+            color: #d4c5a9; 
+            overflow: hidden; 
+        }
         .stat-font { font-family: 'Cinzel', serif; }
-        .scene-content { animation: fadeIn 0.5s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .tab-active { border-bottom: 4px solid var(--accent); color: var(--accent); }
+        .mono { font-family: 'JetBrains Mono', monospace; }
         
-        /* 任务 2.16：Anno式网格交互样式 */
-        .anno-grid-cell {
+        /* Anno-style Grid */
+        .anno-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            background: rgba(0,0,0,0.3);
+            padding: 12px;
+            border-radius: 16px;
+            border: 1px solid rgba(201,168,76,0.2);
+        }
+        .anno-cell {
+            aspect-ratio: 1;
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 8px;
+            cursor: pointer;
             position: relative;
-            background: rgba(15, 23, 42, 0.6);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            overflow: hidden;
-        }
-        .anno-grid-cell:hover {
-            background: rgba(255, 255, 255, 0.05);
-            border-color: var(--accent);
-            box-shadow: inset 0 0 15px rgba(245, 158, 11, 0.2);
-        }
-        .anno-grid-cell.selected-for-build::after {
-            content: attr(data-preview);
-            position: absolute;
-            inset: 0;
+            transition: all 0.2s;
             display: flex;
             align-items: center;
             justify-content: center;
-            opacity: 0.3;
             font-size: 1.5rem;
-            pointer-events: none;
-            animation: pulse-preview 1.5s infinite;
         }
-        @keyframes pulse-preview { 0%, 100% { opacity: 0.2; transform: scale(0.9); } 50% { opacity: 0.5; transform: scale(1.1); } }
-        
-        .building-pop { animation: build-land 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-        @keyframes build-land { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .anno-cell:hover {
+            border-color: var(--gold);
+            background: rgba(201,168,76,0.1);
+        }
+        .anno-cell.fertile {
+            background: rgba(34, 197, 94, 0.1);
+            border-color: rgba(34, 197, 94, 0.3);
+        }
+        .anno-cell.fertile::before {
+            content: '🌱';
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            font-size: 0.6rem;
+            opacity: 0.5;
+        }
+
+        /* Preview Ghost */
+        .anno-cell.preview::after {
+            content: attr(data-icon);
+            opacity: 0.3;
+            filter: grayscale(1);
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse { 0%, 100% { transform: scale(0.9); opacity: 0.2; } 50% { transform: scale(1.1); opacity: 0.5; } }
+
+        /* Tabs */
+        .tab-btn {
+            font-family: 'Cinzel', serif;
+            letter-spacing: 1px;
+            transition: all 0.3s;
+        }
+        .tab-btn.active {
+            color: var(--gold);
+            border-bottom: 2px solid var(--gold);
+        }
+
+        /* Building Card */
+        .bld-card {
+            background: var(--bg-panel);
+            border: 1px solid rgba(255,255,255,0.05);
+            transition: all 0.2s;
+        }
+        .bld-card.selected {
+            border-color: var(--gold);
+            box-shadow: 0 0 15px rgba(201,168,76,0.2);
+            background: rgba(201,168,76,0.05);
+        }
     </style>
 </head>
-<body class="bg-slate-950">
-    <div id="game-app" class="max-w-4xl mx-auto p-4 md:p-8">
-        <!-- 任务 5.2：帝国诏令 -->
-        <div id="ui-edict-overlay" class="hidden fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-6">
-            <div class="bg-amber-100 text-amber-900 p-8 rounded-3xl max-w-md w-full shadow-[0_0_50px_rgba(251,191,36,0.4)] border-8 border-amber-600">
-                <h2 id="ui-edict-title" class="text-3xl font-black mb-4 text-center border-b-2 border-amber-300 pb-2">📜 帝国密诏</h2>
-                <p id="ui-edict-content" class="text-lg leading-relaxed mb-8 italic">"人类皇室要求立即上缴资源以供远征！"</p>
-                <div class="grid grid-cols-2 gap-4">
-                    <button onclick="Game.respondToEdict(true)" class="bg-green-700 text-white py-4 rounded-xl font-bold hover:bg-green-800">遵命</button>
-                    <button onclick="Game.respondToEdict(false)" class="bg-red-700 text-white py-4 rounded-xl font-bold hover:bg-red-800">抗旨</button>
-                </div>
+<body class="bg-slate-950 text-slate-200">
+    <div id="game-app" class="max-w-5xl mx-auto h-screen flex flex-col p-4">
+        
+        <!-- Top Resource Bar (Anno Style) -->
+        <div class="flex items-center gap-4 bg-slate-900/80 p-3 rounded-2xl border border-slate-800 mb-4 overflow-x-auto mono text-xs">
+            <div class="flex items-center gap-2 bg-black/20 px-3 py-1 rounded-md border border-white/5">
+                <span id="ui-weather-icon">☀️</span>
+                <span id="ui-weather-text" class="text-amber-500">Normal</span>
+            </div>
+            <div class="h-4 w-px bg-slate-700"></div>
+            <div class="flex items-center gap-3">
+                <div class="flex items-center gap-1"><span>🌾</span><span id="ui-res-food">0</span></div>
+                <div class="flex items-center gap-1"><span>🪵</span><span id="ui-res-wood">0</span></div>
+                <div class="flex items-center gap-1"><span>🪨</span><span id="ui-res-stone">0</span></div>
+            </div>
+            <div class="h-4 w-px bg-slate-700"></div>
+            <div class="flex items-center gap-3">
+                <div class="flex items-center gap-1"><span>🥩</span><span id="ui-res-meat">0</span></div>
+                <div class="flex items-center gap-1"><span>💀</span><span id="ui-res-bone">0</span></div>
+                <div class="flex items-center gap-1"><span>🌀</span><span id="ui-res-mana">0</span></div>
+            </div>
+            <div class="flex-1"></div>
+            <div class="flex items-center gap-2 font-bold">
+                <span class="text-slate-500">PEACE:</span>
+                <span id="ui-peace-score" class="text-gold text-lg">0</span>
             </div>
         </div>
 
-        <!-- 导航 -->
-        <nav class="flex justify-around mb-8 bg-slate-900/50 p-2 rounded-2xl border border-slate-800 backdrop-blur-md">
-            <button onclick="Game.switchScene('human')" id="tab-human" class="px-6 py-3 font-bold transition-all tab-active">🏰 人类领地</button>
-            <button onclick="Game.switchScene('battle')" id="tab-battle" class="px-6 py-3 font-bold transition-all">⚖️ 终焉战场</button>
-            <button onclick="Game.switchScene('demon')" id="tab-demon" class="px-6 py-3 font-bold transition-all">🔥 深渊魔界</button>
-        </nav>
-
-        <!-- 场景容器 -->
-        <div id="main-viewport">
-            <!-- 人类场景 -->
-            <div id="scene-human" class="scene-content space-y-6">
-                <!-- 资源行 -->
-                <div class="grid grid-cols-4 gap-4">
-                    <div class="bg-blue-950/30 border border-blue-500/20 p-4 rounded-2xl">
-                        <div class="text-blue-400 text-[10px] font-bold mb-1 uppercase">人口 (农民/市民)</div>
-                        <div id="ui-h-pop" class="text-lg font-black stat-font">100</div>
+        <!-- Main Workspace -->
+        <div class="flex-1 flex gap-6 min-h-0">
+            
+            <!-- Left: Sidebar (Buildings & Stats) -->
+            <div class="w-72 flex flex-col bg-slate-900/50 rounded-3xl border border-slate-800 p-6">
+                <div class="mb-6">
+                    <h1 class="stat-font text-gold text-xl tracking-widest border-b border-gold/20 pb-2 mb-4">COLONY</h1>
+                    <div class="flex justify-between items-end mb-1">
+                        <span class="text-[10px] text-slate-500 font-bold uppercase">Population</span>
+                        <span id="ui-pop-count" class="mono text-gold text-sm">0 / 0</span>
                     </div>
-                    <div class="bg-blue-950/30 border border-blue-500/20 p-4 rounded-2xl">
-                        <div class="text-blue-400 text-[10px] font-bold mb-1 uppercase">粮食</div>
-                        <div id="ui-h-food" class="text-2xl font-black stat-font text-blue-200">500</div>
+                    <div class="h-1 bg-black/40 rounded-full overflow-hidden">
+                        <div id="ui-pop-fill" class="h-full bg-gold transition-all" style="width: 20%"></div>
                     </div>
-                    <div class="bg-blue-950/30 border border-blue-500/20 p-4 rounded-2xl text-center ring-2 ring-blue-500/50">
-                        <div class="text-blue-400 text-[10px] font-bold mb-1 uppercase">联盟实时战力</div>
-                        <div id="ui-h-force-val" class="text-2xl font-black stat-font text-white">500</div>
-                    </div>
-                    <div class="bg-blue-950/30 border border-blue-500/20 p-4 rounded-2xl">
-                        <div class="text-blue-400 text-[10px] font-bold mb-1 uppercase">木/石</div>
-                        <div class="text-lg font-black stat-font text-amber-600"><span id="ui-h-wood">200</span> / <span id="ui-h-stone">100</span></div>
-                    </div>
-                </div>
-                
-                <!-- Anno式格子建造区 -->
-                <div class="bg-slate-900/80 p-6 rounded-3xl border border-blue-500/20 shadow-xl">
-                    <div class="flex justify-between items-center mb-4">
-                        <h2 class="text-lg font-bold text-blue-400">🏗️ 领地规划 (4x4 格子)</h2>
-                        <div id="ui-h-build-mode" class="text-xs text-blue-300 italic">选中下方建筑，点击格子建造</div>
-                    </div>
-                    
-                    <div class="grid grid-cols-4 gap-2 mb-6 bg-black/40 p-4 rounded-2xl" id="ui-h-grid">
-                        <!-- JS 渲染 16 个格子 -->
-                    </div>
-
-                    <div class="flex gap-4">
-                        <button onclick="Game.selectBuilding('human', 'farm')" id="btn-h-farm" class="flex-1 bg-blue-900/40 p-3 rounded-xl border border-blue-500/30 hover:bg-blue-800 transition-all text-sm">
-                            🌾 农场 (50木)
-                        </button>
-                        <button onclick="Game.selectBuilding('human', 'sawmill')" id="btn-h-sawmill" class="flex-1 bg-blue-900/40 p-3 rounded-xl border border-blue-500/30 hover:bg-blue-800 transition-all text-sm">
-                            🪚 伐木场 (100石)
-                        </button>
-                        <button onclick="Game.selectBuilding('human', 'quarry')" id="btn-h-quarry" class="flex-1 bg-blue-900/40 p-3 rounded-xl border border-blue-500/30 hover:bg-blue-800 transition-all text-sm">
-                            ⛏️ 采石场 (150木)
-                        </button>
+                    <div id="ui-pop-tiers" class="mt-3 space-y-1 text-[10px] mono text-slate-400">
+                        <!-- Tiers injected here -->
                     </div>
                 </div>
 
-                <div class="bg-slate-900 p-8 rounded-[2.5rem] border border-blue-900/50">
-                    <h2 class="text-xl font-bold mb-8 text-blue-500">🛡️ 补给调度：人类前线</h2>
-                    <div class="space-y-8">
-                        <div>
-                            <div class="flex justify-between mb-2"><span class="text-xs font-bold uppercase tracking-widest text-blue-400">真钢长剑 (增加力量)</span><span id="ui-human-true-val" class="text-blue-200">50%</span></div>
-                            <input type="range" id="input-human-true" oninput="Game.updateSliders('human')" class="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-600">
-                        </div>
-                        <div>
-                            <div class="flex justify-between mb-2"><span class="text-xs font-bold uppercase tracking-widest text-amber-500">搞怪盾牌 (和平撤离)</span><span id="ui-human-funny-val" class="text-amber-500">50%</span></div>
-                            <input type="range" id="input-human-funny" oninput="Game.updateSliders('human')" class="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-amber-500">
-                        </div>
-                        <button onclick="Game.executeSupply('human')" class="w-full py-6 bg-blue-600 hover:bg-blue-500 text-white font-black text-xl rounded-2xl shadow-[0_10px_30px_rgba(37,99,235,0.3)] transition-all active:scale-[0.98]">下达补给令</button>
-                    </div>
+                <div class="flex-1 overflow-y-auto pr-2 space-y-3" id="ui-building-list">
+                    <!-- Buildings injected here -->
                 </div>
             </div>
 
-            <!-- 战场场景 -->
-            <div id="scene-battle" class="scene-content hidden space-y-12 py-10">
-                <div class="text-center space-y-6">
-                    <h3 class="text-slate-500 font-bold uppercase tracking-[0.3em] text-sm">力量平衡天平</h3>
-                    <div class="relative h-16 bg-slate-950 rounded-2xl border-4 border-slate-800 overflow-hidden flex items-center">
-                        <div id="ui-balance-bar" class="h-full bg-gradient-to-r from-blue-600 via-amber-500 to-red-600 transition-all duration-700 shadow-[0_0_20px_rgba(245,158,11,0.2)]" style="width: 50%;"></div>
-                        <div class="absolute inset-0 flex justify-between items-center px-10 font-black italic tracking-tighter text-lg mix-blend-overlay">
-                            <span>ALLIANCE</span>
-                            <span>LEGION</span>
+            <!-- Right: Map & Battle -->
+            <div class="flex-1 flex flex-col gap-6">
+                <!-- Tabs -->
+                <div class="flex gap-8 border-b border-slate-800">
+                    <button onclick="Game.switchScene('human')" id="tab-human" class="tab-btn px-4 py-2 text-sm font-bold active">🏰 Human Alliance</button>
+                    <button onclick="Game.switchScene('demon')" id="tab-demon" class="tab-btn px-4 py-2 text-sm font-bold">🔥 Demon Legion</button>
+                    <button onclick="Game.switchScene('battle')" id="tab-battle" class="tab-btn px-4 py-2 text-sm font-bold">⚖️ Battlefield</button>
+                </div>
+
+                <div id="scene-viewport" class="flex-1 relative">
+                    <!-- Map View (Human/Demon) -->
+                    <div id="view-map" class="h-full flex flex-col gap-6">
+                        <div class="flex-1 flex items-center justify-center">
+                            <div class="anno-grid w-96 h-96" id="ui-map-grid">
+                                <!-- 16 Cells -->
+                            </div>
+                        </div>
+                        
+                        <!-- Supply Controls -->
+                        <div class="bg-slate-900/80 p-6 rounded-3xl border border-slate-800">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="stat-font text-sm uppercase tracking-widest text-slate-400">Frontline Supply</h3>
+                                <div id="ui-force-display" class="mono text-lg text-white">FORCE: 500</div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-8">
+                                <div class="space-y-4">
+                                    <div class="flex justify-between text-[10px] mono"><span>Steel Weapons</span><span id="ui-val-true">50%</span></div>
+                                    <input type="range" id="input-true" oninput="Game.updateSliders()" class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-gold">
+                                </div>
+                                <div class="space-y-4">
+                                    <div class="flex justify-between text-[10px] mono"><span>Funny Gags</span><span id="ui-val-funny">50%</span></div>
+                                    <input type="range" id="input-funny" oninput="Game.updateSliders()" class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-gold">
+                                </div>
+                            </div>
+                            <button onclick="Game.executeSupply()" class="w-full mt-6 py-4 bg-gold hover:bg-gold-bright text-slate-900 font-black rounded-xl transition-all uppercase tracking-tighter">Dispatch Convoy</button>
                         </div>
                     </div>
-                    <p id="ui-warning" class="text-amber-600 text-xs font-bold animate-pulse">! 平衡偏离安全区 (40-60%) 将触发灭世警告 !</p>
-                </div>
-                
-                <div class="relative h-40 bg-slate-900/50 rounded-3xl border border-slate-800 overflow-hidden flex items-center justify-center">
-                    <div id="unit-human" class="absolute w-16 h-16 bg-blue-600 rounded-lg shadow-[0_0_15px_rgba(37,99,235,0.5)] flex items-center justify-center text-2xl transition-all duration-1000" style="left: 20%;">🛡️</div>
-                    <div class="text-slate-700 font-black text-4xl opacity-20">VS</div>
-                    <div id="unit-demon" class="absolute w-16 h-16 bg-red-600 rounded-lg shadow-[0_0_15px_rgba(220,38,38,0.5)] flex items-center justify-center text-2xl transition-all duration-1000" style="right: 20%;">🔥</div>
-                </div>
 
-                <div id="ui-battle-log" class="bg-black/40 rounded-3xl p-6 h-60 overflow-y-auto font-mono text-sm text-slate-500 border border-slate-800/50">
-                    <p class="text-amber-400/80">> [龙王视野] 战场已开启，平衡之博弈正式开始...</p>
-                </div>
-            </div>
-
-            <!-- 魔族场景 -->
-            <div id="scene-demon" class="scene-content hidden space-y-6">
-                <!-- 资源行 -->
-                <div class="grid grid-cols-4 gap-4">
-                    <div class="bg-red-950/20 border border-red-500/20 p-4 rounded-2xl">
-                        <div class="text-red-500 text-[10px] font-bold mb-1 uppercase">魔众 (奴隶/领主)</div>
-                        <div id="ui-d-pop" class="text-lg font-black stat-font">100</div>
-                    </div>
-                    <div class="bg-red-950/20 border border-red-500/20 p-4 rounded-2xl">
-                        <div class="text-red-500 text-[10px] font-bold mb-1 uppercase">肉食</div>
-                        <div id="ui-d-meat" class="text-2xl font-black stat-font text-red-200">500</div>
-                    </div>
-                    <div class="bg-red-950/20 border border-red-500/20 p-4 rounded-2xl text-center ring-2 ring-red-500/50">
-                        <div class="text-red-500 text-[10px] font-bold mb-1 uppercase">深渊实时战力</div>
-                        <div id="ui-d-force-val" class="text-2xl font-black stat-font text-white">500</div>
-                    </div>
-                    <div class="bg-red-950/20 border border-red-500/20 p-4 rounded-2xl">
-                        <div class="text-red-500 text-[10px] font-bold mb-1 uppercase">骨/能</div>
-                        <div class="text-lg font-black stat-font text-purple-400"><span id="ui-d-bone">200</span> / <span id="ui-d-mana">100</span></div>
-                    </div>
-                </div>
-
-                <!-- Anno式格子建造区 -->
-                <div class="bg-slate-900/80 p-6 rounded-3xl border border-red-500/20 shadow-xl">
-                    <div class="flex justify-between items-center mb-4">
-                        <h2 class="text-lg font-bold text-red-500">🏗️ 深渊规划 (4x4 格子)</h2>
-                        <div id="ui-d-build-mode" class="text-xs text-red-300 italic">选中下方建筑，点击格子建造</div>
-                    </div>
-                    
-                    <div class="grid grid-cols-4 gap-2 mb-6 bg-black/40 p-4 rounded-2xl" id="ui-d-grid">
-                        <!-- JS 渲染 16 个格子 -->
-                    </div>
-
-                    <div class="flex gap-4">
-                        <button onclick="Game.selectBuilding('demon', 'pit')" id="btn-d-pit" class="flex-1 bg-red-900/20 p-3 rounded-xl border border-red-500/20 hover:bg-red-900/40 transition-all text-sm">
-                            🥩 腐肉池 (50白骨)
-                        </button>
-                        <button onclick="Game.selectBuilding('demon', 'altar')" id="btn-d-altar" class="flex-1 bg-red-900/20 p-3 rounded-xl border border-red-500/20 hover:bg-red-900/40 transition-all text-sm">
-                            💀 祭坛 (100魔能)
-                        </button>
-                        <button onclick="Game.selectBuilding('demon', 'rift')" id="btn-d-rift" class="flex-1 bg-red-900/20 p-3 rounded-xl border border-red-500/20 hover:bg-red-900/40 transition-all text-sm">
-                            🌀 裂隙 (150白骨)
-                        </button>
-                    </div>
-                </div>
-
-                <div class="bg-slate-900 p-8 rounded-[2.5rem] border border-slate-800">
-                    <h2 class="text-xl font-bold mb-8 text-red-500">🔥 鲜血调拨：深渊前线</h2>
-                    <div class="space-y-8">
-                        <div>
-                            <div class="flex justify-between mb-2"><span class="text-xs font-bold uppercase tracking-widest text-red-500">骨制巨剑 (毁灭之礼)</span><span id="ui-demon-true-val" class="text-red-200">50%</span></div>
-                            <input type="range" id="input-demon-true" oninput="Game.updateSliders('demon')" class="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-red-600">
+                    <!-- Battle View (Hidden by default) -->
+                    <div id="view-battle" class="hidden h-full flex flex-col items-center justify-center space-y-12">
+                        <div class="w-full max-w-2xl text-center space-y-4">
+                            <div class="stat-font text-xs tracking-widest text-slate-500 uppercase">Universal Balance</div>
+                            <div class="relative h-12 bg-black/40 rounded-xl border-2 border-slate-800 overflow-hidden">
+                                <div id="ui-balance-bar" class="h-full bg-gradient-to-r from-blue-600 via-gold to-red-600 transition-all duration-700" style="width: 50%"></div>
+                            </div>
+                            <div id="ui-warning" class="text-[10px] font-bold text-amber-600 animate-pulse uppercase tracking-widest">! Equilibrium Stable !</div>
                         </div>
-                        <div>
-                            <div class="flex justify-between mb-2"><span class="text-xs font-bold uppercase tracking-widest text-amber-500">恐怖惊吓盒 (滑稽撤退)</span><span id="ui-demon-funny-val" class="text-amber-500">50%</span></div>
-                            <input type="range" id="input-demon-funny" oninput="Game.updateSliders('demon')" class="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-amber-500">
+
+                        <div class="relative w-full h-48 flex items-center justify-center bg-slate-900/20 rounded-[3rem] border border-white/5">
+                            <div id="unit-human" class="absolute w-20 h-20 bg-blue-600/20 border-2 border-blue-500 rounded-2xl flex items-center justify-center text-3xl transition-all duration-1000 shadow-[0_0_30px_rgba(37,99,235,0.2)]" style="left: 20%">🛡️</div>
+                            <div class="text-slate-800 font-black text-6xl opacity-10 select-none italic">VS</div>
+                            <div id="unit-demon" class="absolute w-20 h-20 bg-red-600/20 border-2 border-red-500 rounded-2xl flex items-center justify-center text-3xl transition-all duration-1000 shadow-[0_0_30px_rgba(220,38,38,0.2)]" style="right: 20%">🔥</div>
                         </div>
-                        <button onclick="Game.executeSupply('demon')" class="w-full py-6 bg-red-600 hover:bg-red-500 text-white font-black text-xl rounded-2xl shadow-[0_10px_30px_rgba(220,38,38,0.3)] transition-all active:scale-[0.98]">下达战备令</button>
+
+                        <div id="ui-log" class="w-full max-w-2xl h-48 bg-black/40 rounded-2xl p-4 overflow-y-auto mono text-[10px] text-slate-500 border border-white/5 leading-relaxed">
+                            <p class="text-gold/60">> Chronicle initialized. Awaiting Dragon King's command...</p>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-
-        <!-- 底栏 -->
-        <footer class="mt-8 text-center text-slate-600 text-[10px] font-bold uppercase tracking-[0.4em]">
-            Peace Score: <span id="ui-peace-score" class="text-amber-500 text-sm">0</span> | Equilibrium Version 2.4 - ANNO EDITION
-        </footer>
     </div>
 
     <script>
         const Game = {
             state: {
                 human: { 
-                    pop: 100, food: 500, wood: 200, stone: 100,
-                    tiers: { peasant: 100, citizen: 0 },
-                    buildings: { farm: 0, sawmill: 0, quarry: 0 },
-                    grid: Array(16).fill(null),
-                    selected: null
+                    pop: 100, tiers: { peasant: 100, citizen: 0 }, 
+                    food: 500, wood: 200, stone: 100, 
+                    grid: Array(16).fill(null), fertility: [2, 5, 11],
+                    buildings: { farm: 0, sawmill: 0, quarry: 0 }, selected: null 
                 },
                 demon: { 
-                    pop: 100, meat: 500, bone: 200, mana: 100,
-                    tiers: { slave: 100, lord: 0 },
-                    buildings: { pit: 0, altar: 0, rift: 0 },
-                    grid: Array(16).fill(null),
-                    selected: null
+                    pop: 100, tiers: { slave: 100, lord: 0 }, 
+                    meat: 500, bone: 200, mana: 100, 
+                    grid: Array(16).fill(null), fertility: [3, 8, 14],
+                    buildings: { pit: 0, altar: 0, rift: 0 }, selected: null 
                 },
-                battle: { hForce: 500, dForce: 500, peaceScore: 0 },
-                activeScene: 'human', doomsdayTimer: null, isGameOver: false, edict: null
+                battle: { hForce: 500, dForce: 500, peaceScore: 0, isGameOver: false },
+                activeScene: 'human', weather: '☀️ Clear', weatherBoost: 1.0
+            },
+
+            config: {
+                human: {
+                    farm: { name: 'Wheat Farm', icon: '🌾', cost: { wood: 50 }, prod: { out: 'food', val: 5 } },
+                    sawmill: { name: 'Sawmill', icon: '🪚', cost: { stone: 100 }, prod: { out: 'wood', val: 3 } },
+                    quarry: { name: 'Quarry', icon: '⛏️', cost: { wood: 150 }, prod: { out: 'stone', val: 2 } }
+                },
+                demon: {
+                    pit: { name: 'Flesh Pit', icon: '🥩', cost: { bone: 50 }, prod: { out: 'meat', val: 5 } },
+                    altar: { name: 'Soul Altar', icon: '💀', cost: { mana: 100 }, prod: { out: 'bone', val: 3 } },
+                    rift: { name: 'Void Rift', icon: '🌀', cost: { bone: 150 }, prod: { out: 'mana', val: 2 } }
+                }
             },
 
             init() {
-                console.log("Game Initializing...");
-                this.updateSliders('human'); 
-                this.updateSliders('demon');
-                this.loop(); 
-                this.renderGrid('human');
-                this.renderGrid('demon');
-                this.updateUI();
                 window.Game = this;
+                this.renderBuildingList();
+                this.renderGrid();
+                this.loop();
+                this.log("Colony management systems operational.");
             },
 
-            renderGrid(side) {
-                const gridEl = document.getElementById(`ui-${side[0]}-grid`);
+            switchScene(scene) {
+                this.state.activeScene = scene;
+                const map = document.getElementById('view-map');
+                const battle = document.getElementById('view-battle');
+                
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                document.getElementById(`tab-${scene}`).classList.add('active');
+
+                if (scene === 'battle') {
+                    map.classList.add('hidden');
+                    battle.classList.remove('hidden');
+                } else {
+                    map.classList.remove('hidden');
+                    battle.classList.add('hidden');
+                    this.renderBuildingList();
+                    this.renderGrid();
+                }
+                this.updateUI();
+            },
+
+            renderBuildingList() {
+                const side = this.state.activeScene;
+                if (side === 'battle') return;
+                const listEl = document.getElementById('ui-building-list');
+                const cfg = this.config[side];
+                
+                listEl.innerHTML = Object.entries(cfg).map(([key, b]) => {
+                    const sel = this.state[side].selected === key;
+                    const costStr = Object.entries(b.cost).map(([r, v]) => `${v}${r==='wood'?'🪵':r==='stone'?'🪨':r==='bone'?'💀':'🌀'}`).join(' ');
+                    return `
+                        <div onclick="Game.selectBuilding('${key}')" class="bld-card p-4 rounded-2xl cursor-pointer ${sel?'selected':''}">
+                            <div class="flex items-center gap-3">
+                                <div class="text-2xl">${b.icon}</div>
+                                <div class="flex-1">
+                                    <div class="stat-font text-[10px] text-white font-bold">${b.name}</div>
+                                    <div class="mono text-[8px] text-slate-500">Cost: ${costStr}</div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            },
+
+            selectBuilding(key) {
+                const side = this.state.activeScene;
+                this.state[side].selected = (this.state[side].selected === key) ? null : key;
+                this.renderBuildingList();
+                this.renderGrid();
+            },
+
+            renderGrid() {
+                const side = this.state.activeScene;
+                if (side === 'battle') return;
+                const gridEl = document.getElementById('ui-map-grid');
                 gridEl.innerHTML = '';
-                const selectedBuilding = this.state[side].selected;
-                const iconMap = { farm: '🌾', sawmill: '🪚', quarry: '⛏️', pit: '🥩', altar: '💀', rift: '🌀' };
+                
+                const s = this.state[side];
+                const cfg = this.config[side];
 
-                this.state[side].grid.forEach((item, index) => {
+                s.grid.forEach((item, i) => {
                     const cell = document.createElement('div');
-                    cell.className = "anno-grid-cell w-full h-16 rounded-xl flex items-center justify-center text-2xl cursor-pointer";
+                    const isFertile = s.fertility.includes(i);
+                    cell.className = `anno-cell ${isFertile?'fertile':''}`;
                     
-                    // 任务 2.16：沉浸预览逻辑
-                    if (selectedBuilding && !item) {
-                        cell.setAttribute('data-preview', iconMap[selectedBuilding]);
-                        cell.classList.add('selected-for-build');
-                    }
-
                     if (item) {
-                        cell.innerText = iconMap[item];
+                        cell.innerText = cfg[item].icon;
                         cell.classList.add('building-pop');
-                    } else {
-                        cell.innerText = '';
+                    } else if (s.selected) {
+                        cell.classList.add('preview');
+                        cell.setAttribute('data-icon', cfg[s.selected].icon);
                     }
 
-                    cell.onclick = () => this.placeBuilding(side, index);
-                    // 任务 2.16：右键拆除
-                    cell.oncontextmenu = (e) => {
-                        e.preventDefault();
-                        this.demolishBuilding(side, index);
-                    };
-                    
+                    cell.onclick = () => this.placeBuilding(i);
+                    cell.oncontextmenu = (e) => { e.preventDefault(); this.demolish(i); };
                     gridEl.appendChild(cell);
                 });
             },
 
-            demolishBuilding(side, index) {
-                const type = this.state[side].grid[index];
+            placeBuilding(idx) {
+                const side = this.state.activeScene;
+                const s = this.state[side];
+                const type = s.selected;
                 if (!type) return;
-                if (confirm(`确定要拆除这座 ${type} 吗？将返还 50% 资源。`)) {
-                    this.state[side].grid[index] = null;
-                    this.state[side].buildings[type]--;
-                    this.log(`[建设] 大佬拆除了位于 #${index} 的建筑。`);
-                    this.renderGrid(side);
-                    this.updateUI();
-                }
-            },
+                if (s.grid[idx]) return;
 
-            selectBuilding(side, type) {
-                this.state[side].selected = type;
-                this.log(`[建造] 已选中 ${type}，地图预览已开启。`);
-                
-                // 视觉反馈
-                const prefix = side[0];
-                document.querySelectorAll(`[id^="btn-${prefix}-"]`).forEach(b => {
-                    b.classList.replace('bg-blue-800', 'bg-blue-900/40');
-                    b.classList.replace('bg-red-800', 'bg-red-900/20');
-                });
-                
-                const btn = document.getElementById(`btn-${prefix}-${type}`);
-                if (btn) {
-                    btn.classList.replace('bg-blue-900/40', 'bg-blue-800');
-                    btn.classList.replace('bg-red-900/20', 'bg-red-800');
-                }
-                
-                // 刷新地图以展示预览
-                this.renderGrid(side);
-            },
-
-            placeBuilding(side, index) {
-                const type = this.state[side].selected;
-                if (!type) return alert("请先在下方选择一个要建造的建筑！");
-                if (this.state[side].grid[index]) return alert("这个格子已经有建筑了！");
-
-                const costs = {
-                    human: { farm: { wood: 50 }, sawmill: { stone: 100 }, quarry: { wood: 150 } },
-                    demon: { pit: { bone: 50 }, altar: { mana: 100 }, rift: { bone: 150 } }
-                };
-                const cost = costs[side][type];
-                for (let res in cost) {
-                    if (this.state[side][res] < cost[res]) return alert("资源不足！");
+                const cost = this.config[side][type].cost;
+                for (let r in cost) {
+                    if (s[r] < cost[r]) return alert("Insufficient resources!");
                 }
 
-                for (let res in cost) this.state[side][res] -= cost[res];
-                this.state[side].grid[index] = type;
-                this.state[side].buildings[type]++;
-                this.log(`[建设] ${side==='human'?'联盟':'深渊'}在格子 #${index} 建立了 ${type}。`);
-                this.renderGrid(side);
+                for (let r in cost) s[r] -= cost[r];
+                s.grid[idx] = type;
+                s.buildings[type]++;
+                this.log(`Construction complete: ${type} at Sector ${idx}.`);
+                this.renderGrid();
                 this.updateUI();
             },
 
-            switchScene(scene) {
-                document.querySelectorAll('.scene-content').forEach(s => s.classList.add('hidden'));
-                document.getElementById(`scene-${scene}`).classList.remove('hidden');
-                document.querySelectorAll('nav button').forEach(b => b.classList.remove('tab-active'));
-                document.getElementById(`tab-${scene}`).classList.add('tab-active');
-                this.state.activeScene = scene;
+            demolish(idx) {
+                const side = this.state.activeScene;
+                const type = this.state[side].grid[idx];
+                if (!type) return;
+                this.state[side].grid[idx] = null;
+                this.state[side].buildings[type]--;
+                this.log(`Demolished ${type} at Sector ${idx}. Resources recycled.`);
+                this.renderGrid();
+                this.updateUI();
             },
 
-            updateSliders(side) {
-                const t = document.getElementById(`input-${side}-true`).value;
-                const f = document.getElementById(`input-${side}-funny`).value;
-                document.getElementById(`ui-${side}-true-val`).innerText = `${t}%`;
-                document.getElementById(`ui-${side}-funny-val`).innerText = `${f}%`;
+            updateSliders() {
+                const t = document.getElementById('input-true').value;
+                const f = document.getElementById('input-funny').value;
+                document.getElementById('ui-val-true').innerText = `${t}%`;
+                document.getElementById('ui-val-funny').innerText = `${f}%`;
             },
 
-            build(side, type) {
-                const costs = {
-                    human: { farm: { wood: 50 }, sawmill: { stone: 100 }, quarry: { wood: 150 } },
-                    demon: { pit: { bone: 50 }, altar: { mana: 100 }, rift: { bone: 150 } }
-                };
-                const cost = costs[side][type];
-                let canBuild = true;
-                for (let res in cost) if (this.state[side][res] < cost[res]) canBuild = false;
-
-                if (canBuild) {
-                    for (let res in cost) this.state[side][res] -= cost[res];
-                    this.state[side].buildings[type]++;
-                    this.log(`[建设] ${side==='human'?'人类':'魔族'}成功建造了 ${type}！`);
-                    this.updateUI();
-                } else { alert("资源不足，无法动工！"); }
-            },
-
-            executeSupply(target) {
-                console.log("Supply Command Issued to:", target);
-                if (this.state.isGameOver) return;
-                
-                // 核心修复：确保获取的是正确的输入值
-                const tInput = document.getElementById(`input-${target}-true`);
-                const fInput = document.getElementById(`input-${target}-funny`);
-                
-                const t = (tInput ? tInput.value : 50) / 100;
-                const f = (fInput ? fInput.value : 50) / 100;
+            executeSupply() {
+                if (this.state.battle.isGameOver) return;
+                const target = this.state.activeScene;
+                const t = document.getElementById('input-true').value / 100;
+                const f = document.getElementById('input-funny').value / 100;
                 const fake = Math.max(0, 1 - t - f);
 
-                this.log(`商队已发出，预计3秒后抵达${target==='human'?'前线':'深渊'}...`);
-                
+                this.log(`Convoy dispatched to ${target} front. ETA: 3s.`);
                 setTimeout(() => {
-                    if (this.state.isGameOver) return;
-                    console.log("Supply Arrived at:", target);
+                    if (this.state.battle.isGameOver) return;
                     const sideKey = target === 'human' ? 'hForce' : 'dForce';
-                    
-                    // 真货逻辑
-                    const trueBoost = t * 150;
-                    this.state.battle[sideKey] += trueBoost;
-                    
-                    // 假货逻辑
-                    const fakeBoost = fake * 200;
-                    this.state.battle[sideKey] += fakeBoost;
+                    this.state.battle[sideKey] += (t * 150) + (fake * 200);
                     
                     setTimeout(() => {
-                        if (this.state.isGameOver) return;
-                        this.state.battle[sideKey] -= (fakeBoost * 1.5);
-                        if (fake > 0.2) this.log(`⚠️ ${target==='human'?'人类':'魔族'}补给中发现假货，战力崩盘！`);
+                        this.state.battle[sideKey] -= (fake * 250);
+                        if (fake > 0.2) this.log(`Supply Alert: Fake goods detected in ${target} camp! Morale collapsing.`);
                         this.updateUI();
                     }, 5000);
 
-                    // 搞怪救人
                     const saved = Math.floor(f * 40);
                     if (saved > 0) {
                         this.state[target].pop += saved;
                         this.state[target].tiers[target === 'human' ? 'peasant' : 'slave'] += saved;
                         this.state.battle.peaceScore += saved * 10;
-                        this.log(`✨ 救回 ${saved} 人！和平分增加！`);
+                        this.log(`Miracle: ${saved} deserters joined the ${target} colony.`);
                     }
                     this.updateUI();
                 }, 3000);
             },
 
-            triggerEdict() {
-                const isHuman = Math.random() > 0.5;
-                const res = isHuman ? 'food' : 'meat';
-                const amt = Math.floor(this.state[isHuman?'human':'demon'][res] * 0.4 + 200);
-                this.state.edict = { side: isHuman?'human':'demon', res, amt };
-                document.getElementById('ui-edict-content').innerText = `"${isHuman?'人类皇帝':'魔王'}要求立即上缴 ${amt} ${res}！"`;
-                document.getElementById('ui-edict-overlay').classList.remove('hidden');
-            },
-
-            respondToEdict(accept) {
-                const e = this.state.edict;
-                if (accept && this.state[e.side][e.res] >= e.amt) {
-                    this.state[e.side][e.res] -= e.amt;
-                    this.log(`大人遵从了诏令。`);
-                } else {
-                    this.state.battle[e.side === 'human' ? 'hForce' : 'dForce'] -= 150;
-                    this.log(`抗旨导致军心涣散，战力暴跌！`);
-                }
-                document.getElementById('ui-edict-overlay').classList.add('hidden');
-                this.state.edict = null; this.updateUI();
-            },
-
-            log(msg) {
-                const c = document.getElementById('ui-battle-log');
-                const p = document.createElement('p');
-                p.className = "mt-1 text-amber-400/80";
-                p.innerText = `> [${new Date().toLocaleTimeString()}] ${msg}`;
-                c.prepend(p);
-            },
-
             updateUI() {
-                if (this.state.isGameOver) return;
-                const h = this.state.human, d = this.state.demon, b = this.state.battle;
+                const side = this.state.activeScene;
+                const b = this.state.battle;
                 
-                // 实时战力更新
-                document.getElementById('ui-h-force-val').innerText = Math.floor(b.hForce);
-                document.getElementById('ui-d-force-val').innerText = Math.floor(b.dForce);
+                // Top bar
+                document.getElementById('ui-res-food').innerText = Math.floor(this.state.human.food);
+                document.getElementById('ui-res-wood').innerText = Math.floor(this.state.human.wood);
+                document.getElementById('ui-res-stone').innerText = Math.floor(this.state.human.stone);
+                document.getElementById('ui-res-meat').innerText = Math.floor(this.state.demon.meat);
+                document.getElementById('ui-res-bone').innerText = Math.floor(this.state.demon.bone);
+                document.getElementById('ui-res-mana').innerText = Math.floor(this.state.demon.mana);
+                document.getElementById('ui-peace-score').innerText = b.peaceScore;
 
-                document.getElementById('ui-h-pop').innerText = `${h.pop} (${h.tiers.peasant}/${h.tiers.citizen})`;
-                document.getElementById('ui-d-pop').innerText = `${d.pop} (${d.tiers.slave}/${d.tiers.lord})`;
-                
-                document.getElementById('ui-h-food').innerText = Math.floor(h.food);
-                document.getElementById('ui-h-wood').innerText = Math.floor(h.wood);
-                document.getElementById('ui-h-stone').innerText = Math.floor(h.stone);
-                
-                document.getElementById('ui-d-meat').innerText = Math.floor(d.meat);
-                document.getElementById('ui-d-bone').innerText = Math.floor(d.bone);
-                document.getElementById('ui-d-mana').innerText = Math.floor(d.mana);
-                
-                document.getElementById('ui-d-pit-count').innerText = d.buildings.pit;
-                document.getElementById('ui-d-altar-count').innerText = d.buildings.altar;
-                document.getElementById('ui-d-rift-count').innerText = d.buildings.rift;
+                // Sidebar
+                if (side !== 'battle') {
+                    const s = this.state[side];
+                    document.getElementById('ui-pop-count').innerText = `${s.pop} / ${s.pop * 2}`;
+                    document.getElementById('ui-pop-fill').style.width = '40%';
+                    document.getElementById('ui-pop-tiers').innerHTML = side === 'human' 
+                        ? `<div>PEASANTS: ${s.tiers.peasant}</div><div>CITIZENS: ${s.tiers.citizen}</div>`
+                        : `<div>SLAVES: ${s.tiers.slave}</div><div>LORDS: ${s.tiers.lord}</div>`;
+                    
+                    document.getElementById('ui-force-display').innerText = `FORCE: ${Math.floor(b[side==='human'?'hForce':'dForce'])}`;
+                }
 
+                // Battle
                 const total = b.hForce + b.dForce;
                 const balance = (b.hForce / total) * 100;
                 document.getElementById('ui-balance-bar').style.width = `${balance}%`;
-                document.getElementById('ui-peace-score').innerText = b.peaceScore;
-                document.getElementById('unit-human').style.left = `${balance * 0.8}%`;
-                document.getElementById('unit-demon').style.right = `${(100 - balance) * 0.8}%`;
-
-                const warn = document.getElementById('ui-warning');
-                if (balance < 25 || balance > 75) {
-                    if (!this.state.doomsdayTimer) this.state.doomsdayTimer = 10;
-                    this.state.doomsdayTimer -= 0.5;
-                    warn.innerText = `💥 世界毁灭倒计时: ${Math.ceil(this.state.doomsdayTimer)}s 💥`;
-                    warn.className = "text-red-500 font-black animate-ping";
-                    if (this.state.doomsdayTimer <= 0) this.gameOver("战争演变为相互毁灭。");
-                } else {
-                    this.state.doomsdayTimer = null;
-                    warn.className = "text-amber-600 text-xs font-bold animate-pulse";
-                    warn.innerText = "! 平衡偏离安全区 (40-60%) 将触发灭世警告 !";
-                }
+                document.getElementById('unit-human').style.left = `${balance * 0.7}%`;
+                document.getElementById('unit-demon').style.right = `${(100 - balance) * 0.7}%`;
             },
 
-            gameOver(reason) {
-                this.state.isGameOver = true;
-                document.body.innerHTML = `<div class="flex items-center justify-center h-screen bg-black text-white text-center p-8"><div class="space-y-8"><h1 class="text-6xl font-black text-red-600">世界终焉</h1><p class="text-2xl text-gray-400">${reason}</p><div class="text-4xl">和平溢价: <span class="text-green-400">${this.state.battle.peaceScore}</span></div><button onclick="location.reload()" class="bg-gray-800 px-8 py-4 rounded-xl border border-gray-600 hover:bg-white hover:text-black transition-all">重新开启轮回</button></div></div>`;
+            log(msg) {
+                const el = document.getElementById('ui-log');
+                if (!el) return;
+                const p = document.createElement('p');
+                p.innerHTML = `<span class="text-white/20">[${new Date().toLocaleTimeString()}]</span> ${msg}`;
+                el.prepend(p);
             },
 
             loop() {
-                console.log("Loop started");
-                let ticks = 0;
                 setInterval(() => {
-                    if (this.state.isGameOver) return;
-                    ticks++;
+                    if (this.state.battle.isGameOver) return;
                     const h = this.state.human, d = this.state.demon, b = this.state.battle;
 
-                    // 1. 自动推演战场战力损耗 (模拟持续交战)
-                    // 每秒双方战力都会发生随机波动
-                    b.hForce += (Math.random() * 10 - 5);
-                    b.dForce += (Math.random() * 10 - 5);
+                    // Anno-style Consumption & Growth
+                    h.food -= h.pop * 0.08;
+                    if (h.buildings.farm >= 2 && h.food > 300 && h.tiers.peasant > 0) { h.tiers.peasant--; h.tiers.citizen++; }
+                    if (h.food < 0) { h.food = 0; if (h.pop > 10) h.pop--; }
                     
-                    // 确保战力不低于基础值
-                    b.hForce = Math.max(100, b.hForce);
-                    b.dForce = Math.max(100, b.dForce);
+                    const hMult = 1 + (h.tiers.peasant + h.tiers.citizen*3)/500;
+                    h.food += (h.pop * 0.1 + h.buildings.farm * 4) * hMult;
+                    h.wood += (h.pop * 0.05 + h.buildings.sawmill * 3) * hMult;
+                    h.stone += (h.pop * 0.02 + h.buildings.quarry * 2) * hMult;
 
-                    // 2. Anno式需求与阶层升级逻辑
-                    h.food -= h.pop * 0.1;
-                    if (h.buildings.farm >= 3 && h.food > 500 && h.tiers.peasant > 0) { h.tiers.peasant--; h.tiers.citizen++; }
-                    if (h.food <= 0) { h.food = 0; if (h.pop > 10) h.pop--; }
-                    
-                    const hEffPop = h.tiers.peasant + (h.tiers.citizen * 2.5);
-                    const hMult = 1 + (hEffPop / 500);
-                    h.food += (h.pop * 0.15 + h.buildings.farm * 2) * hMult;
-                    h.wood += (h.pop * 0.05 + h.buildings.sawmill * 5) * hMult;
-                    h.stone += (h.pop * 0.02 + h.buildings.quarry * 3) * hMult;
-
-                    d.meat -= d.pop * 0.12;
+                    d.meat -= d.pop * 0.1;
                     if (d.buildings.altar >= 2 && d.bone > 300 && d.tiers.slave > 0) { d.tiers.slave--; d.tiers.lord++; }
-                    if (d.meat <= 0) { d.meat = 0; if (d.pop > 10) d.pop--; }
                     
-                    const dEffPop = d.tiers.slave + (d.tiers.lord * 3.0);
-                    const dMult = 1 + (dEffPop / 500);
-                    d.meat += (d.pop * 0.15 + d.buildings.pit * 2) * dMult;
-                    d.bone += (d.pop * 0.05 + d.buildings.rift * 5) * dMult;
-                    d.mana += (d.pop * 0.02 + d.buildings.altar * 3) * dMult;
+                    const dMult = 1 + (d.tiers.slave + d.tiers.lord*4)/500;
+                    d.meat += (d.pop * 0.1 + d.buildings.pit * 4) * dMult;
+                    d.bone += (d.pop * 0.05 + d.buildings.rift * 3) * dMult;
+                    d.mana += (d.pop * 0.02 + d.buildings.altar * 2) * dMult;
 
-                    if (ticks % 30 === 0 && Math.random() > 0.5) this.triggerEdict();
+                    // World Drift
+                    b.hForce += (Math.random() * 8 - 4);
+                    b.dForce += (Math.random() * 8 - 4);
+
                     this.updateUI();
                 }, 1000);
             }
         };
+
         Game.init();
     </script>
 </body>
