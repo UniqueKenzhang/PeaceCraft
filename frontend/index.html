@@ -7,12 +7,42 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Noto+Sans+SC:wght@300;400;700&display=swap');
-        :root { --accent: #f59e0b; }
+        :root { --accent: #f59e0b; --alliance: #2563eb; --legion: #dc2626; }
         body { font-family: 'Noto Sans SC', sans-serif; background-color: #020617; color: #f8fafc; overflow: hidden; }
         .stat-font { font-family: 'Cinzel', serif; }
         .scene-content { animation: fadeIn 0.5s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .tab-active { border-bottom: 4px solid var(--accent); color: var(--accent); }
+        
+        /* 任务 2.16：Anno式网格交互样式 */
+        .anno-grid-cell {
+            position: relative;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+        }
+        .anno-grid-cell:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: var(--accent);
+            box-shadow: inset 0 0 15px rgba(245, 158, 11, 0.2);
+        }
+        .anno-grid-cell.selected-for-build::after {
+            content: attr(data-preview);
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0.3;
+            font-size: 1.5rem;
+            pointer-events: none;
+            animation: pulse-preview 1.5s infinite;
+        }
+        @keyframes pulse-preview { 0%, 100% { opacity: 0.2; transform: scale(0.9); } 50% { opacity: 0.5; transform: scale(1.1); } }
+        
+        .building-pop { animation: build-land 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes build-land { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
     </style>
 </head>
 <body class="bg-slate-950">
@@ -229,22 +259,68 @@
             renderGrid(side) {
                 const gridEl = document.getElementById(`ui-${side[0]}-grid`);
                 gridEl.innerHTML = '';
+                const selectedBuilding = this.state[side].selected;
+                const iconMap = { farm: '🌾', sawmill: '🪚', quarry: '⛏️', pit: '🥩', altar: '💀', rift: '🌀' };
+
                 this.state[side].grid.forEach((item, index) => {
                     const cell = document.createElement('div');
-                    cell.className = "w-full h-12 bg-slate-800/40 border border-slate-700/50 rounded flex items-center justify-center text-xl cursor-pointer hover:bg-slate-700/60 transition-all";
-                    cell.innerText = item ? (item === 'farm' ? '🌾' : item === 'sawmill' ? '🪚' : item === 'quarry' ? '⛏️' : item === 'pit' ? '🥩' : item === 'altar' ? '💀' : '🌀') : '';
+                    cell.className = "anno-grid-cell w-full h-16 rounded-xl flex items-center justify-center text-2xl cursor-pointer";
+                    
+                    // 任务 2.16：沉浸预览逻辑
+                    if (selectedBuilding && !item) {
+                        cell.setAttribute('data-preview', iconMap[selectedBuilding]);
+                        cell.classList.add('selected-for-build');
+                    }
+
+                    if (item) {
+                        cell.innerText = iconMap[item];
+                        cell.classList.add('building-pop');
+                    } else {
+                        cell.innerText = '';
+                    }
+
                     cell.onclick = () => this.placeBuilding(side, index);
+                    // 任务 2.16：右键拆除
+                    cell.oncontextmenu = (e) => {
+                        e.preventDefault();
+                        this.demolishBuilding(side, index);
+                    };
+                    
                     gridEl.appendChild(cell);
                 });
             },
 
+            demolishBuilding(side, index) {
+                const type = this.state[side].grid[index];
+                if (!type) return;
+                if (confirm(`确定要拆除这座 ${type} 吗？将返还 50% 资源。`)) {
+                    this.state[side].grid[index] = null;
+                    this.state[side].buildings[type]--;
+                    this.log(`[建设] 大佬拆除了位于 #${index} 的建筑。`);
+                    this.renderGrid(side);
+                    this.updateUI();
+                }
+            },
+
             selectBuilding(side, type) {
                 this.state[side].selected = type;
-                this.log(`[建造] 已选中 ${type}，请点击上方格子放置。`);
+                this.log(`[建造] 已选中 ${type}，地图预览已开启。`);
+                
                 // 视觉反馈
-                document.querySelectorAll(`[id^="btn-${side[0]}-"]`).forEach(b => b.classList.replace('bg-blue-800', 'bg-blue-900/40'));
-                const btn = document.getElementById(`btn-${side[0]}-${type}`);
-                if (btn) btn.classList.replace('bg-blue-900/40', 'bg-blue-800');
+                const prefix = side[0];
+                document.querySelectorAll(`[id^="btn-${prefix}-"]`).forEach(b => {
+                    b.classList.replace('bg-blue-800', 'bg-blue-900/40');
+                    b.classList.replace('bg-red-800', 'bg-red-900/20');
+                });
+                
+                const btn = document.getElementById(`btn-${prefix}-${type}`);
+                if (btn) {
+                    btn.classList.replace('bg-blue-900/40', 'bg-blue-800');
+                    btn.classList.replace('bg-red-900/20', 'bg-red-800');
+                }
+                
+                // 刷新地图以展示预览
+                this.renderGrid(side);
             },
 
             placeBuilding(side, index) {
