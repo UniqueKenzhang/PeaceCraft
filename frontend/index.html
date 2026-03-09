@@ -40,42 +40,46 @@
         <div id="main-viewport">
             <!-- 人类场景 -->
             <div id="scene-human" class="scene-content space-y-6">
+                <!-- 资源行 -->
                 <div class="grid grid-cols-4 gap-4">
                     <div class="bg-blue-950/30 border border-blue-500/20 p-4 rounded-2xl">
                         <div class="text-blue-400 text-[10px] font-bold mb-1 uppercase">人口 (农民/市民)</div>
-                        <div id="ui-h-pop" class="text-lg font-black stat-font">100 (100/0)</div>
+                        <div id="ui-h-pop" class="text-lg font-black stat-font">100</div>
                     </div>
                     <div class="bg-blue-950/30 border border-blue-500/20 p-4 rounded-2xl">
                         <div class="text-blue-400 text-[10px] font-bold mb-1 uppercase">粮食</div>
                         <div id="ui-h-food" class="text-2xl font-black stat-font text-blue-200">500</div>
                     </div>
-                    <div class="bg-blue-950/30 border border-blue-500/20 p-4 rounded-2xl">
-                        <div class="text-blue-400 text-[10px] font-bold mb-1 uppercase">木材</div>
-                        <div id="ui-h-wood" class="text-2xl font-black stat-font text-amber-600">200</div>
+                    <div class="bg-blue-950/30 border border-blue-500/20 p-4 rounded-2xl text-center ring-2 ring-blue-500/50">
+                        <div class="text-blue-400 text-[10px] font-bold mb-1 uppercase">联盟实时战力</div>
+                        <div id="ui-h-force-val" class="text-2xl font-black stat-font text-white">500</div>
                     </div>
                     <div class="bg-blue-950/30 border border-blue-500/20 p-4 rounded-2xl">
-                        <div class="text-blue-400 text-[10px] font-bold mb-1 uppercase">石材</div>
-                        <div id="ui-h-stone" class="text-2xl font-black stat-font text-slate-400">100</div>
+                        <div class="text-blue-400 text-[10px] font-bold mb-1 uppercase">木/石</div>
+                        <div class="text-lg font-black stat-font text-amber-600"><span id="ui-h-wood">200</span> / <span id="ui-h-stone">100</span></div>
                     </div>
                 </div>
                 
+                <!-- Anno式格子建造区 -->
                 <div class="bg-slate-900/80 p-6 rounded-3xl border border-blue-500/20 shadow-xl">
-                    <h2 class="text-lg font-bold mb-4 text-blue-400">🏗️ 领地建设 (Anno式阶层)</h2>
-                    <div class="grid grid-cols-3 gap-4">
-                        <button onclick="Game.build('human', 'farm')" class="bg-blue-900/40 hover:bg-blue-800 p-4 rounded-2xl border border-blue-500/30 text-left">
-                            <div class="text-xl mb-1">🌾 农场</div>
-                            <div class="text-[10px] text-blue-300">50木 | 升级阶层基石</div>
-                            <div class="text-xs font-bold mt-2">已建: <span id="ui-h-farm-count">0</span></div>
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-lg font-bold text-blue-400">🏗️ 领地规划 (4x4 格子)</h2>
+                        <div id="ui-h-build-mode" class="text-xs text-blue-300 italic">选中下方建筑，点击格子建造</div>
+                    </div>
+                    
+                    <div class="grid grid-cols-4 gap-2 mb-6 bg-black/40 p-4 rounded-2xl" id="ui-h-grid">
+                        <!-- JS 渲染 16 个格子 -->
+                    </div>
+
+                    <div class="flex gap-4">
+                        <button onclick="Game.selectBuilding('human', 'farm')" id="btn-h-farm" class="flex-1 bg-blue-900/40 p-3 rounded-xl border border-blue-500/30 hover:bg-blue-800 transition-all text-sm">
+                            🌾 农场 (50木)
                         </button>
-                        <button onclick="Game.build('human', 'sawmill')" class="bg-blue-900/40 hover:bg-blue-800 p-4 rounded-2xl border border-blue-500/30 text-left">
-                            <div class="text-xl mb-1">🪚 伐木场</div>
-                            <div class="text-[10px] text-blue-300">100石 | 木材产出++</div>
-                            <div class="text-xs font-bold mt-2">已建: <span id="ui-h-sawmill-count">0</span></div>
+                        <button onclick="Game.selectBuilding('human', 'sawmill')" id="btn-h-sawmill" class="flex-1 bg-blue-900/40 p-3 rounded-xl border border-blue-500/30 hover:bg-blue-800 transition-all text-sm">
+                            🪚 伐木场 (100石)
                         </button>
-                        <button onclick="Game.build('human', 'quarry')" class="bg-blue-900/40 hover:bg-blue-800 p-4 rounded-2xl border border-blue-500/30 text-left">
-                            <div class="text-xl mb-1">⛏️ 采石场</div>
-                            <div class="text-[10px] text-blue-300">150木 | 石材产出++</div>
-                            <div class="text-xs font-bold mt-2">已建: <span id="ui-h-quarry-count">0</span></div>
+                        <button onclick="Game.selectBuilding('human', 'quarry')" id="btn-h-quarry" class="flex-1 bg-blue-900/40 p-3 rounded-xl border border-blue-500/30 hover:bg-blue-800 transition-all text-sm">
+                            ⛏️ 采石场 (150木)
                         </button>
                     </div>
                 </div>
@@ -123,45 +127,51 @@
 
             <!-- 魔族场景 -->
             <div id="scene-demon" class="scene-content hidden space-y-6">
+                <!-- 资源行 -->
                 <div class="grid grid-cols-4 gap-4">
                     <div class="bg-red-950/20 border border-red-500/20 p-4 rounded-2xl">
                         <div class="text-red-500 text-[10px] font-bold mb-1 uppercase">魔众 (奴隶/领主)</div>
-                        <div id="ui-d-pop" class="text-lg font-black stat-font">100 (100/0)</div>
+                        <div id="ui-d-pop" class="text-lg font-black stat-font">100</div>
                     </div>
                     <div class="bg-red-950/20 border border-red-500/20 p-4 rounded-2xl">
                         <div class="text-red-500 text-[10px] font-bold mb-1 uppercase">肉食</div>
                         <div id="ui-d-meat" class="text-2xl font-black stat-font text-red-200">500</div>
                     </div>
-                    <div class="bg-red-950/20 border border-red-500/20 p-4 rounded-2xl">
-                        <div class="text-red-500 text-[10px] font-bold mb-1 uppercase">白骨</div>
-                        <div id="ui-d-bone" class="text-2xl font-black stat-font text-slate-300">200</div>
+                    <div class="bg-red-950/20 border border-red-500/20 p-4 rounded-2xl text-center ring-2 ring-red-500/50">
+                        <div class="text-red-500 text-[10px] font-bold mb-1 uppercase">深渊实时战力</div>
+                        <div id="ui-d-force-val" class="text-2xl font-black stat-font text-white">500</div>
                     </div>
                     <div class="bg-red-950/20 border border-red-500/20 p-4 rounded-2xl">
-                        <div class="text-red-500 text-[10px] font-bold mb-1 uppercase">魔能</div>
-                        <div id="ui-d-mana" class="text-2xl font-black stat-font text-purple-500">100</div>
+                        <div class="text-red-500 text-[10px] font-bold mb-1 uppercase">骨/能</div>
+                        <div class="text-lg font-black stat-font text-purple-400"><span id="ui-d-bone">200</span> / <span id="ui-d-mana">100</span></div>
+                    </div>
+                </div>
+
+                <!-- Anno式格子建造区 -->
+                <div class="bg-slate-900/80 p-6 rounded-3xl border border-red-500/20 shadow-xl">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-lg font-bold text-red-500">🏗️ 深渊规划 (4x4 格子)</h2>
+                        <div id="ui-d-build-mode" class="text-xs text-red-300 italic">选中下方建筑，点击格子建造</div>
+                    </div>
+                    
+                    <div class="grid grid-cols-4 gap-2 mb-6 bg-black/40 p-4 rounded-2xl" id="ui-d-grid">
+                        <!-- JS 渲染 16 个格子 -->
+                    </div>
+
+                    <div class="flex gap-4">
+                        <button onclick="Game.selectBuilding('demon', 'pit')" id="btn-d-pit" class="flex-1 bg-red-900/20 p-3 rounded-xl border border-red-500/20 hover:bg-red-900/40 transition-all text-sm">
+                            🥩 腐肉池 (50白骨)
+                        </button>
+                        <button onclick="Game.selectBuilding('demon', 'altar')" id="btn-d-altar" class="flex-1 bg-red-900/20 p-3 rounded-xl border border-red-500/20 hover:bg-red-900/40 transition-all text-sm">
+                            💀 祭坛 (100魔能)
+                        </button>
+                        <button onclick="Game.selectBuilding('demon', 'rift')" id="btn-d-rift" class="flex-1 bg-red-900/20 p-3 rounded-xl border border-red-500/20 hover:bg-red-900/40 transition-all text-sm">
+                            🌀 裂隙 (150白骨)
+                        </button>
                     </div>
                 </div>
 
                 <div class="bg-slate-900 p-8 rounded-[2.5rem] border border-slate-800">
-                    <h2 class="text-xl font-bold mb-4 text-red-500">🏗️ 深渊建设 (Anno式阶层)</h2>
-                    <div class="grid grid-cols-3 gap-4 mb-8">
-                        <button onclick="Game.build('demon', 'pit')" class="bg-red-900/20 hover:bg-red-900/40 p-4 rounded-2xl border border-red-500/20 text-left">
-                            <div class="text-xl mb-1">🥩 腐肉池</div>
-                            <div class="text-[10px] text-red-300">50白骨 | 产量基础</div>
-                            <div class="text-xs font-bold mt-2">已建: <span id="ui-d-pit-count">0</span></div>
-                        </button>
-                        <button onclick="Game.build('demon', 'altar')" class="bg-red-900/20 hover:bg-red-900/40 p-4 rounded-2xl border border-red-500/20 text-left">
-                            <div class="text-xl mb-1">💀 骸骨祭坛</div>
-                            <div class="text-[10px] text-red-300">100魔能 | 升级阶层基石</div>
-                            <div class="text-xs font-bold mt-2">已建: <span id="ui-d-altar-count">0</span></div>
-                        </button>
-                        <button onclick="Game.build('demon', 'rift')" class="bg-red-900/20 hover:bg-red-900/40 p-4 rounded-2xl border border-red-500/20 text-left">
-                            <div class="text-xl mb-1">🌀 魔能裂隙</div>
-                            <div class="text-[10px] text-red-300">150白骨 | 魔能产出++</div>
-                            <div class="text-xs font-bold mt-2">已建: <span id="ui-d-rift-count">0</span></div>
-                        </button>
-                    </div>
-
                     <h2 class="text-xl font-bold mb-8 text-red-500">🔥 鲜血调拨：深渊前线</h2>
                     <div class="space-y-8">
                         <div>
@@ -187,8 +197,20 @@
     <script>
         const Game = {
             state: {
-                human: { pop: 100, food: 500, wood: 200, stone: 100, tiers: { peasant: 100, citizen: 0 }, buildings: { farm: 0, sawmill: 0, quarry: 0 } },
-                demon: { pop: 100, meat: 500, bone: 200, mana: 100, tiers: { slave: 100, lord: 0 }, buildings: { pit: 0, altar: 0, rift: 0 } },
+                human: { 
+                    pop: 100, food: 500, wood: 200, stone: 100,
+                    tiers: { peasant: 100, citizen: 0 },
+                    buildings: { farm: 0, sawmill: 0, quarry: 0 },
+                    grid: Array(16).fill(null),
+                    selected: null
+                },
+                demon: { 
+                    pop: 100, meat: 500, bone: 200, mana: 100,
+                    tiers: { slave: 100, lord: 0 },
+                    buildings: { pit: 0, altar: 0, rift: 0 },
+                    grid: Array(16).fill(null),
+                    selected: null
+                },
                 battle: { hForce: 500, dForce: 500, peaceScore: 0 },
                 activeScene: 'human', doomsdayTimer: null, isGameOver: false, edict: null
             },
@@ -198,9 +220,53 @@
                 this.updateSliders('human'); 
                 this.updateSliders('demon');
                 this.loop(); 
+                this.renderGrid('human');
+                this.renderGrid('demon');
                 this.updateUI();
-                // 确保全局作用域能访问到 Game 对象
                 window.Game = this;
+            },
+
+            renderGrid(side) {
+                const gridEl = document.getElementById(`ui-${side[0]}-grid`);
+                gridEl.innerHTML = '';
+                this.state[side].grid.forEach((item, index) => {
+                    const cell = document.createElement('div');
+                    cell.className = "w-full h-12 bg-slate-800/40 border border-slate-700/50 rounded flex items-center justify-center text-xl cursor-pointer hover:bg-slate-700/60 transition-all";
+                    cell.innerText = item ? (item === 'farm' ? '🌾' : item === 'sawmill' ? '🪚' : item === 'quarry' ? '⛏️' : item === 'pit' ? '🥩' : item === 'altar' ? '💀' : '🌀') : '';
+                    cell.onclick = () => this.placeBuilding(side, index);
+                    gridEl.appendChild(cell);
+                });
+            },
+
+            selectBuilding(side, type) {
+                this.state[side].selected = type;
+                this.log(`[建造] 已选中 ${type}，请点击上方格子放置。`);
+                // 视觉反馈
+                document.querySelectorAll(`[id^="btn-${side[0]}-"]`).forEach(b => b.classList.replace('bg-blue-800', 'bg-blue-900/40'));
+                const btn = document.getElementById(`btn-${side[0]}-${type}`);
+                if (btn) btn.classList.replace('bg-blue-900/40', 'bg-blue-800');
+            },
+
+            placeBuilding(side, index) {
+                const type = this.state[side].selected;
+                if (!type) return alert("请先在下方选择一个要建造的建筑！");
+                if (this.state[side].grid[index]) return alert("这个格子已经有建筑了！");
+
+                const costs = {
+                    human: { farm: { wood: 50 }, sawmill: { stone: 100 }, quarry: { wood: 150 } },
+                    demon: { pit: { bone: 50 }, altar: { mana: 100 }, rift: { bone: 150 } }
+                };
+                const cost = costs[side][type];
+                for (let res in cost) {
+                    if (this.state[side][res] < cost[res]) return alert("资源不足！");
+                }
+
+                for (let res in cost) this.state[side][res] -= cost[res];
+                this.state[side].grid[index] = type;
+                this.state[side].buildings[type]++;
+                this.log(`[建设] ${side==='human'?'联盟':'深渊'}在格子 #${index} 建立了 ${type}。`);
+                this.renderGrid(side);
+                this.updateUI();
             },
 
             switchScene(scene) {
@@ -314,17 +380,22 @@
             updateUI() {
                 if (this.state.isGameOver) return;
                 const h = this.state.human, d = this.state.demon, b = this.state.battle;
-                document.getElementById('ui-h-pop').innerText = `${h.pop} (${h.tiers.peasant} 农民 / ${h.tiers.citizen} 市民)`;
-                document.getElementById('ui-d-pop').innerText = `${d.pop} (${d.tiers.slave} 奴隶 / ${d.tiers.lord} 领主)`;
+                
+                // 实时战力更新
+                document.getElementById('ui-h-force-val').innerText = Math.floor(b.hForce);
+                document.getElementById('ui-d-force-val').innerText = Math.floor(b.dForce);
+
+                document.getElementById('ui-h-pop').innerText = `${h.pop} (${h.tiers.peasant}/${h.tiers.citizen})`;
+                document.getElementById('ui-d-pop').innerText = `${d.pop} (${d.tiers.slave}/${d.tiers.lord})`;
+                
                 document.getElementById('ui-h-food').innerText = Math.floor(h.food);
                 document.getElementById('ui-h-wood').innerText = Math.floor(h.wood);
                 document.getElementById('ui-h-stone').innerText = Math.floor(h.stone);
-                document.getElementById('ui-h-farm-count').innerText = h.buildings.farm;
-                document.getElementById('ui-h-sawmill-count').innerText = h.buildings.sawmill;
-                document.getElementById('ui-h-quarry-count').innerText = h.buildings.quarry;
+                
                 document.getElementById('ui-d-meat').innerText = Math.floor(d.meat);
                 document.getElementById('ui-d-bone').innerText = Math.floor(d.bone);
                 document.getElementById('ui-d-mana').innerText = Math.floor(d.mana);
+                
                 document.getElementById('ui-d-pit-count').innerText = d.buildings.pit;
                 document.getElementById('ui-d-altar-count').innerText = d.buildings.altar;
                 document.getElementById('ui-d-rift-count').innerText = d.buildings.rift;
