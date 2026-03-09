@@ -199,6 +199,8 @@
                 this.updateSliders('demon');
                 this.loop(); 
                 this.updateUI();
+                // 确保全局作用域能访问到 Game 对象
+                window.Game = this;
             },
 
             switchScene(scene) {
@@ -234,30 +236,46 @@
             },
 
             executeSupply(target) {
+                console.log("Supply Command Issued to:", target);
                 if (this.state.isGameOver) return;
-                const t = document.getElementById(`input-${target[0]}-true`).value / 100;
-                const f = document.getElementById(`input-${target[0]}-funny`).value / 100;
+                
+                // 核心修复：确保获取的是正确的输入值
+                const tInput = document.getElementById(`input-${target}-true`);
+                const fInput = document.getElementById(`input-${target}-funny`);
+                
+                const t = (tInput ? tInput.value : 50) / 100;
+                const f = (fInput ? fInput.value : 50) / 100;
                 const fake = Math.max(0, 1 - t - f);
 
-                this.log(`商队出发，预计3秒后抵达...`);
+                this.log(`商队已发出，预计3秒后抵达${target==='human'?'前线':'深渊'}...`);
+                
                 setTimeout(() => {
                     if (this.state.isGameOver) return;
+                    console.log("Supply Arrived at:", target);
                     const sideKey = target === 'human' ? 'hForce' : 'dForce';
-                    this.state.battle[sideKey] += t * 80 + fake * 120;
+                    
+                    // 真货逻辑
+                    const trueBoost = t * 150;
+                    this.state.battle[sideKey] += trueBoost;
+                    
+                    // 假货逻辑
+                    const fakeBoost = fake * 200;
+                    this.state.battle[sideKey] += fakeBoost;
+                    
                     setTimeout(() => {
                         if (this.state.isGameOver) return;
-                        this.state.battle[sideKey] -= (fake * 220);
-                        if (fake > 0.3) this.log(`⚠️ ${target==='human'?'人类':'魔族'}补给中发现假货，战力崩盘！`);
+                        this.state.battle[sideKey] -= (fakeBoost * 1.5);
+                        if (fake > 0.2) this.log(`⚠️ ${target==='human'?'人类':'魔族'}补给中发现假货，战力崩盘！`);
                         this.updateUI();
                     }, 5000);
 
-                    const saved = Math.floor(f * 35);
+                    // 搞怪救人
+                    const saved = Math.floor(f * 40);
                     if (saved > 0) {
-                        const quotes = target === 'human' ? ["‘不打了，回去种地！’"] : ["‘好滑稽，溜了溜了！’"];
                         this.state[target].pop += saved;
                         this.state[target].tiers[target === 'human' ? 'peasant' : 'slave'] += saved;
                         this.state.battle.peaceScore += saved * 10;
-                        this.log(`✨ ${target==='human'?'人类':'魔族'}: ${quotes[0]} (救回 ${saved} 人)`);
+                        this.log(`✨ 救回 ${saved} 人！和平分增加！`);
                     }
                     this.updateUI();
                 }, 3000);
