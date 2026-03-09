@@ -1,0 +1,19 @@
+framework: crewai
+topic: Refine PeaceCraft Anno-style UI and Logic
+roles:
+  ui_specialist:
+    role: UI UX Specialist
+    backstory: Expert in Anno series interface design, focused on luxury textures and intuitive layouts.
+    goal: Design an advanced dashboard for PeaceCraft that shows detailed production rates and population needs.
+    tasks:
+      design_dashboard:
+        description: Create a HTML/CSS/JS component for a 'Detailed Production Overview' panel that fits into the existing index.html. Use Anno 1800 aesthetic.
+        expected_output: A code block containing the HTML and CSS for the dashboard.
+  logic_engineer:
+    role: Game Logic Engineer
+    backstory: Expert in complex simulation systems and resource management algorithms.
+    goal: Optimize the production chain logic to ensure scaling population doesn't break the economy.
+    tasks:
+      optimize_loop:
+        description: Refine the resource calculation formulas in the Game.loop function to support multi-stage production chains.
+        expected_output: A refined JavaScript function for the resource production loop.
