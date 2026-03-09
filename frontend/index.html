@@ -40,14 +40,22 @@
         <main id="main-stage">
             <!-- 人类场景 -->
             <div id="scene-human" class="scene-content space-y-6">
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="bg-blue-950/30 border border-blue-500/20 p-6 rounded-3xl shadow-inner">
-                        <div class="text-blue-400 text-xs font-bold mb-2 uppercase">领地人口</div>
-                        <div id="ui-h-pop" class="text-4xl font-black stat-font">100</div>
+                <div class="grid grid-cols-4 gap-4">
+                    <div class="bg-blue-950/30 border border-blue-500/20 p-4 rounded-2xl shadow-inner">
+                        <div class="text-blue-400 text-[10px] font-bold mb-1 uppercase">人口</div>
+                        <div id="ui-h-pop" class="text-2xl font-black stat-font">100</div>
                     </div>
-                    <div class="bg-blue-950/30 border border-blue-500/20 p-6 rounded-3xl shadow-inner">
-                        <div class="text-blue-400 text-xs font-bold mb-2 uppercase">储备粮食</div>
-                        <div id="ui-h-food" class="text-4xl font-black stat-font text-blue-200">500</div>
+                    <div class="bg-blue-950/30 border border-blue-500/20 p-4 rounded-2xl shadow-inner">
+                        <div class="text-blue-400 text-[10px] font-bold mb-1 uppercase">粮食</div>
+                        <div id="ui-h-food" class="text-2xl font-black stat-font text-blue-200">500</div>
+                    </div>
+                    <div class="bg-blue-950/30 border border-blue-500/20 p-4 rounded-2xl shadow-inner">
+                        <div class="text-blue-400 text-[10px] font-bold mb-1 uppercase">木材</div>
+                        <div id="ui-h-wood" class="text-2xl font-black stat-font text-amber-600">200</div>
+                    </div>
+                    <div class="bg-blue-950/30 border border-blue-500/20 p-4 rounded-2xl shadow-inner">
+                        <div class="text-blue-400 text-[10px] font-bold mb-1 uppercase">石材</div>
+                        <div id="ui-h-stone" class="text-2xl font-black stat-font text-slate-400">100</div>
                     </div>
                 </div>
                 <div class="bg-slate-900 p-8 rounded-[2.5rem] border border-slate-800 shadow-2xl">
@@ -86,14 +94,22 @@
 
             <!-- 魔族场景 (结构同人类) -->
             <div id="scene-demon" class="scene-content hidden space-y-6">
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="bg-red-950/20 border border-red-500/20 p-6 rounded-3xl">
-                        <div class="text-red-500 text-xs font-bold mb-2 uppercase">魔众数量</div>
-                        <div id="ui-d-pop" class="text-4xl font-black stat-font">100</div>
+                <div class="grid grid-cols-4 gap-4">
+                    <div class="bg-red-950/20 border border-red-500/20 p-4 rounded-2xl">
+                        <div class="text-red-500 text-[10px] font-bold mb-1 uppercase">魔众</div>
+                        <div id="ui-d-pop" class="text-2xl font-black stat-font">100</div>
                     </div>
-                    <div class="bg-red-950/20 border border-red-500/20 p-6 rounded-3xl">
-                        <div class="text-red-500 text-xs font-bold mb-2 uppercase">储备肉食</div>
-                        <div id="ui-d-meat" class="text-4xl font-black stat-font text-red-200">500</div>
+                    <div class="bg-red-950/20 border border-red-500/20 p-4 rounded-2xl">
+                        <div class="text-red-500 text-[10px] font-bold mb-1 uppercase">肉食</div>
+                        <div id="ui-d-meat" class="text-2xl font-black stat-font text-red-200">500</div>
+                    </div>
+                    <div class="bg-red-950/20 border border-red-500/20 p-4 rounded-2xl">
+                        <div class="text-red-500 text-[10px] font-bold mb-1 uppercase">白骨</div>
+                        <div id="ui-d-bone" class="text-2xl font-black stat-font text-slate-300">200</div>
+                    </div>
+                    <div class="bg-red-950/20 border border-red-500/20 p-4 rounded-2xl">
+                        <div class="text-red-500 text-[10px] font-bold mb-1 uppercase">魔能</div>
+                        <div id="ui-d-mana" class="text-2xl font-black stat-font text-purple-500">100</div>
                     </div>
                 </div>
                 <div class="bg-slate-900 p-8 rounded-[2.5rem] border border-slate-800">
@@ -118,8 +134,8 @@
         // --- 虾总管单机版引擎：逻辑大一统 ---
         const Game = {
             state: {
-                human: { pop: 100, food: 500 },
-                demon: { pop: 100, meat: 500 },
+                human: { pop: 100, food: 500, wood: 200, stone: 100 },
+                demon: { pop: 100, meat: 500, bone: 200, mana: 100 },
                 battle: { hForce: 500, dForce: 500, peaceScore: 0 },
                 activeScene: 'human'
             },
@@ -180,8 +196,13 @@
                 // 更新人口与资源
                 document.getElementById('ui-h-pop').innerText = this.state.human.pop;
                 document.getElementById('ui-h-food').innerText = Math.floor(this.state.human.food);
+                document.getElementById('ui-h-wood').innerText = Math.floor(this.state.human.wood);
+                document.getElementById('ui-h-stone').innerText = Math.floor(this.state.human.stone);
+
                 document.getElementById('ui-d-pop').innerText = this.state.demon.pop;
                 document.getElementById('ui-d-meat').innerText = Math.floor(this.state.demon.meat);
+                document.getElementById('ui-d-bone').innerText = Math.floor(this.state.demon.bone);
+                document.getElementById('ui-d-mana').innerText = Math.floor(this.state.demon.mana);
                 
                 // 更新天平与和平分
                 const total = this.state.battle.hForce + this.state.battle.dForce;
@@ -194,7 +215,12 @@
                 setInterval(() => {
                     // 全效同步产出逻辑
                     this.state.human.food += this.state.human.pop * 0.15;
+                    this.state.human.wood += this.state.human.pop * 0.05;
+                    this.state.human.stone += this.state.human.pop * 0.02;
+
                     this.state.demon.meat += this.state.demon.pop * 0.15;
+                    this.state.demon.bone += this.state.demon.pop * 0.05;
+                    this.state.demon.mana += this.state.demon.pop * 0.02;
                     
                     // 战力随时间缓慢损耗 (模拟战争)
                     this.state.battle.hForce = Math.max(100, this.state.battle.hForce - 1);
