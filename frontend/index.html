@@ -223,7 +223,6 @@
 
                 // 任务 3.3：延迟抵达逻辑
                 setTimeout(() => {
-                    // 任务 3.2：武器数值模型 (真货稳健，假货崩盘，搞怪截流)
                     const sideKey = target === 'human' ? 'hForce' : 'dForce';
                     
                     // 1. 真货：稳健提升战力
@@ -233,26 +232,29 @@
                     // 2. 假货：虚假繁荣 (先加后大减)
                     const fakeBoost = fake * 120;
                     this.state.battle[sideKey] += fakeBoost;
-                    this.log(`${target === 'human' ? '人类' : '魔族'}由于领到大量物资，战力虚假暴涨！`);
+                    if (fake > 0.3) this.log(`${target === 'human' ? '人类' : '魔族'}由于领到大量物资，战力虚假暴涨！`);
                     
-                    // 5秒后假货原形毕露
                     setTimeout(() => {
                         this.state.battle[sideKey] -= (fakeBoost + fake * 100);
-                        this.log(`⚠️ 警报！${target === 'human' ? '人类' : '魔族'}的补给中发现大量假货，战力发生崩盘！`);
+                        if (fake > 0.3) this.log(`⚠️ 警报！${target === 'human' ? '人类' : '魔族'}的补给中发现大量假货，战力发生崩盘！`);
                         this.updateUI();
                     }, 5000);
 
-                    // 3. 搞怪：截流人口 (救回逃兵)
+                    // 任务 4.2：搞怪逻辑强化 (专属对白与逃兵转化)
                     const saved = Math.floor(f * 35);
-                    if (target === 'human') {
-                        this.state.human.pop += saved;
-                    } else {
-                        this.state.demon.pop += saved;
-                    }
-                    this.state.battle.peaceScore += saved * 10;
-                    
                     if (saved > 0) {
-                        this.log(`✨ 奇迹！通过大人的滑稽补给，成功从战场救回 ${saved} 名人口。`);
+                        const quotes = target === 'human' 
+                            ? ["‘太好玩了！老子不打仗了，回去种地！’", "‘龙王大人派发的痒痒挠真好使，溜了溜了...’", "‘这些魔族长得太抽象了，笑得我拿不稳剑，撤！’"]
+                            : ["‘这个惊吓盒太给劲了！我要带回去给老婆看！’", "‘哈哈哈哈！这种死法太滑稽了，我要退伍当演员！’", "‘这种补给...是认真的吗？溜回深渊养老去了！’"];
+                        const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
+                        
+                        if (target === 'human') {
+                            this.state.human.pop += saved;
+                        } else {
+                            this.state.demon.pop += saved;
+                        }
+                        this.state.battle.peaceScore += saved * 10;
+                        this.log(`✨ ${target === 'human' ? '人类' : '魔族'}士兵：${randomQuote} (救回 ${saved} 人)`);
                     }
                     
                     this.updateUI();
