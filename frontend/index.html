@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PeaceCraft - 天平之祭 (Vast Map Edition)</title>
+    <title>PeaceCraft - 天平之祭 (Anno Logic Fixed)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Crimson+Pro:wght@300;400;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
@@ -19,62 +19,51 @@
         #sidebar { width: 300px; min-width: 300px; background: var(--bg-panel); border-right: 1px solid var(--border); display: flex; flex-direction: column; z-index: 10; }
         #main-area { flex: 1; display: flex; flex-direction: column; position: relative; }
         
-        canvas { display: block; background: #1e3a52; cursor: grab; }
-        canvas:active { cursor: grabbing; }
+        canvas { display: block; background: #1e3a52; cursor: crosshair; }
 
-        /* Anno Tabs */
         .tab-btn { font-family: 'Cinzel', serif; letter-spacing: 1px; color: #8a7e6a; transition: all 0.2s; border-bottom: 2px solid transparent; }
         .tab-btn.active { color: var(--gold); border-bottom-color: var(--gold); }
 
-        /* Scrollbar */
-        #bld-list::-webkit-scrollbar { width: 4px; }
-        #bld-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-
         .bld-card { background: var(--bg-card); border: 1px solid var(--border); transition: all 0.15s; cursor: pointer; }
         .bld-card:hover { background: #362f28; border-color: #544a3c; }
-        .bld-card.selected { border-color: var(--gold); box-shadow: 0 0 12px rgba(201,168,76,0.15); }
+        .bld-card.selected { border-color: var(--gold); box-shadow: 0 0 12px rgba(201,168,76,0.15); background: #362f28; }
+        
+        #ui-log::-webkit-scrollbar { width: 4px; }
+        #ui-log::-webkit-scrollbar-thumb { background: var(--border); }
     </style>
 </head>
 <body>
     <div id="game-container">
-        <!-- Sidebar -->
         <div id="sidebar">
             <div class="p-6 border-b border-white/5">
                 <h1 class="stat-font text-gold text-xl tracking-[4px] font-bold">PEACECRAFT</h1>
-                <p class="text-[10px] text-slate-500 uppercase tracking-widest mt-1">Sacrifice of Balance</p>
+                <p class="text-[10px] text-slate-500 uppercase tracking-widest mt-1">Refined Colony Logic</p>
             </div>
 
             <div class="p-6 border-b border-white/5">
                 <div class="flex justify-between text-[10px] uppercase font-bold text-slate-500 mb-2">
-                    <span>Population</span>
+                    <span id="ui-side-label">Alliance Pop</span>
                     <span id="ui-pop-val" class="text-gold mono">0 / 0</span>
                 </div>
                 <div class="h-1 bg-black/40 rounded-full overflow-hidden">
                     <div id="ui-pop-bar" class="h-full bg-gold w-0 transition-all"></div>
                 </div>
-                <div id="ui-tiers" class="mt-4 space-y-1 text-[10px] mono text-slate-400">
-                    <!-- Tiers -->
-                </div>
+                <div id="ui-tiers" class="mt-4 space-y-1 text-[10px] mono text-slate-400"></div>
             </div>
 
-            <!-- Building Tabs -->
             <div class="flex border-b border-white/5 bg-black/10">
-                <button onclick="Game.switchTab('raw')" id="tab-raw" class="flex-1 py-3 text-[10px] font-black uppercase tab-btn active">Raw</button>
+                <button onclick="Game.switchTab('raw')" id="tab-raw" class="flex-1 py-3 text-[10px] font-black uppercase tab-btn active">Production</button>
                 <button onclick="Game.switchTab('civil')" id="tab-civil" class="flex-1 py-3 text-[10px] font-black uppercase tab-btn">Civil</button>
             </div>
 
-            <div id="bld-list" class="flex-1 overflow-y-auto p-4 space-y-3">
-                <!-- Buildings -->
-            </div>
+            <div id="bld-list" class="flex-1 overflow-y-auto p-4 space-y-3"></div>
 
             <div class="p-4 bg-black/20 text-[10px] text-center border-t border-white/5 mono text-slate-600">
-                RIGHT-CLICK TO DEMOLISH • DRAG TO PAN
+                L-CLICK TO BUILD • R-CLICK TO DEMOLISH • DRAG TO PAN
             </div>
         </div>
 
-        <!-- Main Area -->
         <div id="main-area">
-            <!-- Top Bar -->
             <div class="h-14 bg-slate-900/90 border-b border-border flex items-center px-6 gap-6 z-20">
                 <nav class="flex gap-6 mr-8">
                     <button onclick="Game.switchScene('human')" id="scene-human" class="tab-btn active text-xs font-bold uppercase">Alliance</button>
@@ -82,68 +71,51 @@
                     <button onclick="Game.switchScene('battle')" id="scene-battle" class="tab-btn text-xs font-bold uppercase">Battlefield</button>
                 </nav>
                 
-                <div class="flex gap-4 mono text-[11px] items-center">
-                    <div class="flex items-center gap-1.5 bg-black/20 px-2 py-1 rounded border border-white/5">
-                        <span>🌾</span><span id="ui-res-food" class="text-white">0</span>
-                    </div>
-                    <div class="flex items-center gap-1.5 bg-black/20 px-2 py-1 rounded border border-white/5">
-                        <span>🪵</span><span id="ui-res-wood" class="text-white">0</span>
-                    </div>
-                    <div class="flex items-center gap-1.5 bg-black/20 px-2 py-1 rounded border border-white/5">
-                        <span>🪨</span><span id="ui-res-stone" class="text-white">0</span>
-                    </div>
-                    <div class="w-px h-4 bg-white/10 mx-2"></div>
-                    <div class="flex items-center gap-1.5 bg-black/20 px-2 py-1 rounded border border-white/5">
-                        <span>🥩</span><span id="ui-res-meat" class="text-white">0</span>
-                    </div>
-                    <div class="flex items-center gap-1.5 bg-black/20 px-2 py-1 rounded border border-white/5">
-                        <span>💀</span><span id="ui-res-bone" class="text-white">0</span>
-                    </div>
+                <div id="ui-res-row" class="flex gap-4 mono text-[11px] items-center">
+                    <!-- Res icons injected by JS -->
                 </div>
 
                 <div class="flex-1"></div>
-                
-                <div class="flex items-center gap-4">
-                    <div class="text-right">
-                        <div class="text-[9px] text-slate-500 uppercase font-bold mono">Peace score</div>
-                        <div id="ui-peace" class="text-gold font-bold stat-font">0</div>
-                    </div>
+                <div id="ui-peace-container" class="text-right">
+                    <div class="text-[9px] text-slate-500 uppercase font-bold mono">Peace score</div>
+                    <div id="ui-peace" class="text-gold font-bold stat-font">0</div>
                 </div>
             </div>
 
-            <!-- Canvas Viewport -->
             <div id="viewport" class="flex-1 relative overflow-hidden bg-[#1e3a52]">
                 <canvas id="gameCanvas"></canvas>
                 
-                <!-- Supply Panel Overlay -->
                 <div id="supply-ui" class="absolute bottom-6 left-1/2 -translate-x-1/2 bg-slate-900/90 p-6 rounded-3xl border border-white/10 backdrop-blur-xl shadow-2xl w-[500px]">
                     <div class="flex justify-between mb-4 items-center">
                         <span id="ui-force-side" class="stat-font text-xs uppercase text-gold">Alliance Front</span>
                         <span id="ui-force-val" class="mono text-white text-lg">500</span>
                     </div>
                     <div class="grid grid-cols-2 gap-8">
-                        <input type="range" id="in-true" class="w-full accent-gold h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer">
-                        <input type="range" id="in-funny" class="w-full accent-gold h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer">
+                        <div class="space-y-2">
+                            <div class="flex justify-between text-[9px] mono"><span>Steel Weapons</span><span id="v-true">50%</span></div>
+                            <input type="range" id="in-true" oninput="Game.upSlid()" class="w-full accent-gold h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer">
+                        </div>
+                        <div class="space-y-2">
+                            <div class="flex justify-between text-[9px] mono"><span>Funny Gags</span><span id="v-funny">50%</span></div>
+                            <input type="range" id="in-funny" oninput="Game.upSlid()" class="w-full accent-gold h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer">
+                        </div>
                     </div>
                     <button onclick="Game.dispatch()" class="w-full mt-6 py-3 bg-gold hover:bg-gold-bright text-slate-900 font-black rounded-xl uppercase text-xs transition-all">Dispatch Convoy</button>
                 </div>
 
-                <!-- Battle Overlay -->
                 <div id="battle-view" class="hidden absolute inset-0 bg-black/60 flex flex-col items-center justify-center p-12 space-y-12">
                     <div class="w-full max-w-2xl text-center space-y-4">
-                        <div class="stat-font text-xs tracking-[0.5em] text-slate-500 uppercase">Equilibrium Status</div>
-                        <div class="relative h-14 bg-black/80 rounded-2xl border-2 border-slate-800 overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.5)]">
+                        <div class="stat-font text-xs tracking-[0.5em] text-slate-500 uppercase">Universal Balance</div>
+                        <div class="relative h-14 bg-black/80 rounded-2xl border-2 border-slate-800 overflow-hidden">
                             <div id="ui-balance" class="h-full bg-gradient-to-r from-blue-600 via-gold to-red-600 transition-all duration-700" style="width: 50%"></div>
                         </div>
                     </div>
                     <div class="relative w-full h-64 flex items-center justify-center">
-                        <div id="unit-h" class="absolute w-24 h-24 bg-blue-600/20 border-2 border-blue-500 rounded-3xl flex items-center justify-center text-4xl transition-all duration-1000 shadow-[0_0_40px_rgba(37,99,235,0.3)]" style="left: 20%">🛡️</div>
+                        <div id="unit-h" class="absolute w-24 h-24 bg-blue-600/20 border-2 border-blue-500 rounded-3xl flex items-center justify-center text-4xl transition-all duration-1000" style="left: 20%">🛡️</div>
                         <div class="text-slate-800 font-black text-8xl opacity-10 italic">VS</div>
-                        <div id="unit-d" class="absolute w-24 h-24 bg-red-600/20 border-2 border-red-500 rounded-3xl flex items-center justify-center text-4xl transition-all duration-1000 shadow-[0_0_40px_rgba(220,38,38,0.3)]" style="right: 20%">🔥</div>
+                        <div id="unit-d" class="absolute w-24 h-24 bg-red-600/20 border-2 border-red-500 rounded-3xl flex items-center justify-center text-4xl transition-all duration-1000" style="right: 20%">🔥</div>
                     </div>
-                    <div id="ui-log" class="w-full max-w-2xl h-40 bg-black/60 rounded-2xl p-6 overflow-y-auto mono text-[10px] text-slate-500 border border-white/5 scroll-smooth">
-                        <p>> Equilibrium operational. Awaiting orders...</p>
-                    </div>
+                    <div id="ui-log" class="w-full max-w-2xl h-40 bg-black/60 rounded-2xl p-6 overflow-y-auto mono text-[10px] text-slate-500 border border-white/5 scroll-smooth"></div>
                 </div>
             </div>
         </div>
@@ -186,6 +158,7 @@
                 this.renderBldList();
                 this.loop();
                 requestAnimationFrame(t => this.draw(t));
+                this.log("Dragon King, the balance is yours to hold.");
             },
 
             resize() {
@@ -201,6 +174,7 @@
                 document.getElementById('battle-view').classList.toggle('hidden', s !== 'battle');
                 document.getElementById('supply-ui').classList.toggle('hidden', s === 'battle');
                 this.renderBldList();
+                this.updateUI();
             },
 
             switchTab(t) {
@@ -217,7 +191,9 @@
                     if (b.cat !== this.state.tab) return;
                     const card = document.createElement('div');
                     card.className = `bld-card p-4 rounded-xl flex items-center gap-4 ${this.state[s].selected === k ? 'selected' : ''}`;
-                    card.innerHTML = `<div class="text-2xl">${b.icon}</div><div><div class="stat-font text-[10px] text-white font-bold">${b.name}</div><div class="mono text-[8px] text-slate-500">${b.size[0]}x${b.size[1]} • Cost: ${Object.values(b.cost)[0]}${Object.keys(b.cost)[0][0]}</div></div>`;
+                    const costKey = Object.keys(b.cost)[0];
+                    const costVal = b.cost[costKey];
+                    card.innerHTML = `<div class="text-2xl">${b.icon}</div><div><div class="stat-font text-[10px] text-white font-bold">${b.name}</div><div class="mono text-[8px] text-slate-500">${b.size[0]}x${b.size[1]} • Cost: ${costVal} ${costKey}</div></div>`;
                     card.onclick = () => { this.state[s].selected = this.state[s].selected === k ? null : k; this.renderBldList(); };
                     el.appendChild(card);
                 });
@@ -225,33 +201,31 @@
 
             onDown(e) {
                 const rect = this.canvas.getBoundingClientRect();
-                const x = e.clientX - rect.left, y = e.clientY - rect.top;
                 if (e.button === 0) {
                     if (this.state[this.state.scene]?.selected) {
                         this.place();
                     } else {
-                        const cam = this.state[this.state.scene].camera;
-                        this.state.drag = { x: e.clientX, y: e.clientY, camX: cam.x, camY: cam.y };
+                        this.state.drag = { x: e.clientX, y: e.clientY, camX: this.state[this.state.scene].camera.x, camY: this.state[this.state.scene].camera.y };
                     }
                 }
             },
 
             onMove(e) {
                 const rect = this.canvas.getBoundingClientRect();
-                this.state.mouse.x = e.clientX - rect.left;
-                this.state.mouse.y = e.clientY - rect.top;
-                if (this.state.drag) {
-                    const cam = this.state[this.state.scene].camera;
-                    cam.x = this.state.drag.camX - (e.clientX - this.state.drag.x);
-                    cam.y = this.state.drag.camY - (e.clientY - this.state.drag.y);
+                const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+                this.state.mouse.x = mx; this.state.mouse.y = my;
+                
+                const cur = this.state[this.state.scene];
+                if (this.state.drag && cur) {
+                    cur.camera.x = this.state.drag.camX - (e.clientX - this.state.drag.x);
+                    cur.camera.y = this.state.drag.camY - (e.clientY - this.state.drag.y);
                     const max = MAP_SZ * TILE;
-                    cam.x = Math.max(0, Math.min(max - this.canvas.width, cam.x));
-                    cam.y = Math.max(0, Math.min(max - this.canvas.height, cam.y));
+                    cur.camera.x = Math.max(0, Math.min(max - this.canvas.width, cur.camera.x));
+                    cur.camera.y = Math.max(0, Math.min(max - this.canvas.height, cur.camera.y));
                 }
-                const cam = this.state[this.state.scene]?.camera;
-                if (cam) {
-                    this.state.mouse.gx = Math.floor((this.state.mouse.x + cam.x) / TILE);
-                    this.state.mouse.gy = Math.floor((this.state.mouse.y + cam.y) / TILE);
+                if (cur) {
+                    this.state.mouse.gx = Math.floor((mx + cur.camera.x) / TILE);
+                    this.state.mouse.gy = Math.floor((my + cur.camera.y) / TILE);
                 }
             },
 
@@ -262,18 +236,18 @@
                 const type = cur.selected; const b = this.config[s][type];
                 const gx = this.state.mouse.gx, gy = this.state.mouse.gy;
                 
-                // Collision
+                if (gx < 2 || gy < 2 || gx + b.size[0] > MAP_SZ - 2 || gy + b.size[1] > MAP_SZ - 2) return;
+
                 for(let p of cur.placed) {
                     const pb = this.config[s][p.type];
                     if (!(gx + b.size[0] <= p.gx || gx >= p.gx + pb.size[0] || gy + b.size[1] <= p.gy || gy >= p.gy + pb.size[1])) return;
                 }
                 
-                // Cost
                 for(let r in b.cost) if (cur[r] < b.cost[r]) return;
                 for(let r in b.cost) cur[r] -= b.cost[r];
                 
                 cur.placed.push({ type, gx, gy });
-                this.log(`Constructed ${b.name} at [${gx}, ${gy}]`);
+                this.log(`Building ${b.name} established.`);
                 this.updateUI();
             },
 
@@ -284,16 +258,43 @@
                     const pb = this.config[s][p.type];
                     return gx >= p.gx && gx < p.gx + pb.size[0] && gy >= p.gy && gy < p.gy + pb.size[1];
                 });
-                if (idx !== -1) { cur.placed.splice(idx, 1); this.log("Demolished sector."); this.updateUI(); }
+                if (idx !== -1) { 
+                    const p = cur.placed[idx]; const b = this.config[s][p.type];
+                    for(let r in b.cost) cur[r] += Math.floor(b.cost[r] * 0.5);
+                    cur.placed.splice(idx, 1); 
+                    this.log("Structure dismantled. Resources salvaged."); 
+                    this.updateUI(); 
+                }
+            },
+
+            upSlid() {
+                document.getElementById('v-true').innerText = document.getElementById('in-true').value + '%';
+                document.getElementById('v-funny').innerText = document.getElementById('in-funny').value + '%';
             },
 
             dispatch() {
-                this.log("Dispatching supply convoy...");
+                const s = this.state.scene; const b = this.state.battle;
+                const t = document.getElementById('in-true').value / 100;
+                const f = document.getElementById('in-funny').value / 100;
+                const fake = Math.max(0, 1 - t - f);
+
+                this.log(`Convoy dispatched to the ${s} front.`);
                 setTimeout(() => {
-                    const s = this.state.scene;
-                    if (s === 'human') this.state.battle.hForce += 100;
-                    else this.state.battle.dForce += 100;
-                    this.log("Supplies arrived.");
+                    const key = s === 'human' ? 'hForce' : 'dForce';
+                    b[key] += (t * 150) + (fake * 200);
+                    setTimeout(() => {
+                        b[key] -= (fake * 250);
+                        if (fake > 0.2) this.log(`⚠️ Warning: Fake goods sabotage in ${s} camp!`);
+                        this.updateUI();
+                    }, 5000);
+                    const saved = Math.floor(f * 40);
+                    if (saved > 0) {
+                        this.state[s].pop += saved;
+                        this.state[s].tiers[s === 'human' ? 'peasant' : 'slave'] += saved;
+                        b.peace += saved * 10;
+                        this.log(`✨ ${saved} souls were spared and joined your colony.`);
+                    }
+                    this.updateUI();
                 }, 2000);
             },
 
@@ -302,7 +303,6 @@
                 const ctx = this.ctx; const cur = this.state[s]; const cam = cur.camera;
                 ctx.clearRect(0,0,this.canvas.width, this.canvas.height);
                 
-                // Terrain
                 for(let y=0; y<MAP_SZ; y++) {
                     for(let x=0; x<MAP_SZ; x++) {
                         const sx = x*TILE - cam.x, sy = y*TILE - cam.y;
@@ -314,7 +314,6 @@
                     }
                 }
 
-                // Buildings
                 cur.placed.forEach(p => {
                     const b = this.config[s][p.type];
                     const sx = p.gx*TILE - cam.x, sy = p.gy*TILE - cam.y;
@@ -324,57 +323,62 @@
                     ctx.fillText(b.icon, sx + (b.size[0]*TILE)/2, sy + (b.size[1]*TILE)/2 + 7);
                 });
 
-                // Preview
                 if (cur.selected) {
                     const b = this.config[s][cur.selected];
-                    ctx.globalAlpha = 0.4; ctx.fillStyle = 'white';
-                    ctx.fillRect(this.state.mouse.gx*TILE - cam.x, this.state.mouse.gy*TILE - cam.y, b.size[0]*TILE, b.size[1]*TILE);
+                    const gx = this.state.mouse.gx, gy = this.state.mouse.gy;
+                    ctx.globalAlpha = 0.4; 
+                    ctx.fillStyle = (gx < 2 || gy < 2 || gx+b.size[0] > MAP_SZ-2 || gy+b.size[1] > MAP_SZ-2) ? 'red' : 'white';
+                    ctx.fillRect(gx*TILE - cam.x, gy*TILE - cam.y, b.size[0]*TILE, b.size[1]*TILE);
                     ctx.globalAlpha = 1;
                 }
-
                 requestAnimationFrame(t => this.draw(t));
             },
 
             log(m) {
                 const l = document.getElementById('ui-log');
-                const p = document.createElement('p'); p.innerHTML = `> ${m}`;
+                const p = document.createElement('p'); p.innerHTML = `> [${new Date().toLocaleTimeString()}] ${m}`;
                 l.prepend(p);
             },
 
             updateUI() {
+                const s = this.state.scene; const cur = this.state[s];
                 const h = this.state.human, d = this.state.demon, b = this.state.battle;
-                document.getElementById('ui-res-food').innerText = Math.floor(h.food);
-                document.getElementById('ui-res-wood').innerText = Math.floor(h.wood);
-                document.getElementById('ui-res-stone').innerText = Math.floor(h.stone);
-                document.getElementById('ui-res-meat').innerText = Math.floor(d.meat);
-                document.getElementById('ui-res-bone').innerText = Math.floor(d.bone);
-                document.getElementById('ui-pop-val').innerText = `${h.pop + d.pop} / 2000`;
-                document.getElementById('ui-peace').innerText = b.peace;
                 
+                document.getElementById('ui-res-row').innerHTML = s === 'human' ? `
+                    <div class="flex items-center gap-1.5 bg-black/20 px-2 py-1 rounded">🌾 <span id="ui-res-food">${Math.floor(h.food)}</span></div>
+                    <div class="flex items-center gap-1.5 bg-black/20 px-2 py-1 rounded">🪵 <span id="ui-res-wood">${Math.floor(h.wood)}</span></div>
+                    <div class="flex items-center gap-1.5 bg-black/20 px-2 py-1 rounded">🪨 <span id="ui-res-stone">${Math.floor(h.stone)}</span></div>
+                ` : `
+                    <div class="flex items-center gap-1.5 bg-black/20 px-2 py-1 rounded">🥩 <span id="ui-res-meat">${Math.floor(d.meat)}</span></div>
+                    <div class="flex items-center gap-1.5 bg-black/20 px-2 py-1 rounded">💀 <span id="ui-res-bone">${Math.floor(d.bone)}</span></div>
+                    <div class="flex items-center gap-1.5 bg-black/20 px-2 py-1 rounded">🌀 <span id="ui-res-mana">${Math.floor(d.mana)}</span></div>
+                `;
+
+                document.getElementById('ui-side-label').innerText = s === 'human' ? 'Alliance Pop' : 'Legion Pop';
+                document.getElementById('ui-pop-val').innerText = `${cur.pop} / ${cur.pop + 200}`;
+                document.getElementById('ui-pop-bar').style.width = '45%';
+                document.getElementById('ui-tiers').innerHTML = s === 'human' ? `<div>PEASANTS: ${h.tiers.peasant}</div><div>CITIZENS: ${h.tiers.citizen}</div>` : `<div>SLAVES: ${d.tiers.slave}</div><div>LORDS: ${d.tiers.lord}</div>`;
+                
+                document.getElementById('ui-peace').innerText = b.peace;
                 const total = b.hForce + b.dForce;
                 const balance = (b.hForce / total) * 100;
                 document.getElementById('ui-balance').style.width = `${balance}%`;
                 document.getElementById('unit-h').style.left = `${balance * 0.7}%`;
                 document.getElementById('unit-d').style.right = `${(100 - balance) * 0.7}%`;
-                
-                const side = this.state.scene === 'human' ? 'hForce' : 'dForce';
-                document.getElementById('ui-force-side').innerText = this.state.scene === 'human' ? "Alliance Force" : "Legion Force";
-                document.getElementById('ui-force-val').innerText = Math.floor(b[side]);
+                document.getElementById('ui-force-val').innerText = Math.floor(b[s === 'human' ? 'hForce' : 'dForce']);
             },
 
             loop() {
                 setInterval(() => {
                     const h = this.state.human, d = this.state.demon, b = this.state.battle;
-                    // Production
+                    h.food -= h.pop * 0.05; d.meat -= d.pop * 0.05;
                     h.placed.forEach(p => h[this.config.human[p.type].prod.out] += this.config.human[p.type].prod.val);
                     d.placed.forEach(p => d[this.config.demon[p.type].prod.out] += this.config.demon[p.type].prod.val);
-                    // Drift
-                    b.hForce += (Math.random()*4 - 2); b.dForce += (Math.random()*4 - 2);
+                    b.hForce += (Math.random()*6 - 3); b.dForce += (Math.random()*6 - 3);
                     this.updateUI();
                 }, 1000);
             }
         };
-
         Game.init();
     </script>
 </body>
