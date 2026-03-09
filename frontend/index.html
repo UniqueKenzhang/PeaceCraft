@@ -145,26 +145,61 @@
             funnyR.oninput = update;
         });
 
-        function sendSupply(target) {
-            const t = document.getElementById(`${target[0]}-true-range`).value / 100;
-            const f = document.getElementById(`${target[0]}-funny-range`).value / 100;
-            const log = document.getElementById('battle-log');
-            
-            const p = document.createElement('p');
-            p.className = "text-amber-400 mt-2";
-            p.innerText = `> [${new Date().toLocaleTimeString()}] 指令下达：正在为${target === 'human' ? '人类' : '魔族'}运送补给...`;
-            log.prepend(p);
-            
-            alert(`龙王圣意已达！\n真货：${t*100}% | 搞怪：${f*100}%`);
+        // --- 虾总管：真正的神兵联调逻辑 ---
+        const API_BASE = "http://43.128.68.5:18789/api"; // 指向龙王大人的高性能后端
+
+        async function syncState() {
+            try {
+                const res = await fetch(`${API_BASE}/state`);
+                const data = await res.json();
+                
+                // 更新人类数据
+                document.getElementById('h-pop').innerText = data.human.pop;
+                document.getElementById('h-food').innerText = data.human.food;
+                document.getElementById('h-morale').innerText = data.human.morale;
+                
+                // 更新魔族数据
+                document.getElementById('d-pop').innerText = data.demon.pop;
+                document.getElementById('d-meat').innerText = data.demon.meat;
+                document.getElementById('d-fear').innerText = data.demon.fear;
+                
+                // 更新战场
+                document.getElementById('balance-bar').style.width = data.battle.balance + "%";
+                document.getElementById('global-peace-score').innerText = data.battle.peace_score;
+            } catch (e) {
+                console.error("同步失败，请确保后端 main.py 已启动", e);
+            }
         }
 
-        // 模拟平衡变动
-        setInterval(() => {
-            const bar = document.getElementById('balance-bar');
-            const current = parseFloat(bar.style.width);
-            const drift = (Math.random() - 0.5) * 4;
-            bar.style.width = Math.min(90, max(10, current + drift)) + "%";
-        }, 3000);
+        async function sendSupply(target) {
+            const t = document.getElementById(`${target[0]}-true-range`).value / 100;
+            const f = document.getElementById(`${target[0]}-funny-range`).value / 100;
+            
+            const log = document.getElementById('battle-log');
+            const p = document.createElement('p');
+            p.className = "text-amber-400 mt-2";
+            p.innerText = `> [${new Date().toLocaleTimeString()}] 正在调拨物资...`;
+            log.prepend(p);
+
+            try {
+                const res = await fetch(`${API_BASE}/supply`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        target: target,
+                        true_ratio: t,
+                        funny_ratio: f
+                    })
+                });
+                const result = await res.json();
+                alert(result.msg);
+            } catch (e) {
+                alert("补给线被截断，请检查网络！");
+            }
+        }
+
+        // 龙王大人，同步频率设为每 2 秒一次，既能看到实时变动，又不给后端增加压力
+        setInterval(syncState, 2000);
         function max(a,b){return a>b?a:b}
     </script>
 </body>
