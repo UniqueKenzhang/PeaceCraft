@@ -134,8 +134,14 @@
         // --- 虾总管单机版引擎：逻辑大一统 ---
         const Game = {
             state: {
-                human: { pop: 100, food: 500, wood: 200, stone: 100 },
-                demon: { pop: 100, meat: 500, bone: 200, mana: 100 },
+                human: { 
+                    pop: 100, food: 500, wood: 200, stone: 100,
+                    buildings: { farm: 0, sawmill: 0, quarry: 0 }
+                },
+                demon: { 
+                    pop: 100, meat: 500, bone: 200, mana: 100,
+                    buildings: { pit: 0, altar: 0, rift: 0 }
+                },
                 battle: { hForce: 500, dForce: 500, peaceScore: 0 },
                 activeScene: 'human'
             },
@@ -158,6 +164,28 @@
                 const f = document.getElementById(`input-${side}-funny`).value;
                 document.getElementById(`ui-${side}-true-val`).innerText = `${t}%`;
                 document.getElementById(`ui-${side}-funny-val`).innerText = `${f}%`;
+            },
+
+            build(side, type) {
+                const costs = {
+                    farm: { wood: 50 },
+                    sawmill: { stone: 100 },
+                    quarry: { wood: 150 }
+                };
+                const cost = costs[type];
+                let canBuild = true;
+                for (let res in cost) {
+                    if (this.state[side][res] < cost[res]) canBuild = false;
+                }
+
+                if (canBuild) {
+                    for (let res in cost) this.state[side][res] -= cost[res];
+                    this.state[side].buildings[type]++;
+                    this.log(`${side === 'human' ? '人类' : '魔族'}成功建造了 ${type}！`);
+                    this.updateUI();
+                } else {
+                    alert("资源不足，无法动工！");
+                }
             },
 
             executeSupply(target) {
@@ -199,6 +227,10 @@
                 document.getElementById('ui-h-wood').innerText = Math.floor(this.state.human.wood);
                 document.getElementById('ui-h-stone').innerText = Math.floor(this.state.human.stone);
 
+                document.getElementById('ui-h-farm-count').innerText = this.state.human.buildings.farm;
+                document.getElementById('ui-h-sawmill-count').innerText = this.state.human.buildings.sawmill;
+                document.getElementById('ui-h-quarry-count').innerText = this.state.human.buildings.quarry;
+
                 document.getElementById('ui-d-pop').innerText = this.state.demon.pop;
                 document.getElementById('ui-d-meat').innerText = Math.floor(this.state.demon.meat);
                 document.getElementById('ui-d-bone').innerText = Math.floor(this.state.demon.bone);
@@ -214,9 +246,10 @@
             loop() {
                 setInterval(() => {
                     // 全效同步产出逻辑
-                    this.state.human.food += this.state.human.pop * 0.15;
-                    this.state.human.wood += this.state.human.pop * 0.05;
-                    this.state.human.stone += this.state.human.pop * 0.02;
+                    // 基础产出 + 建筑加成
+                    this.state.human.food += (this.state.human.pop * 0.15) + (this.state.human.buildings.farm * 2);
+                    this.state.human.wood += (this.state.human.pop * 0.05) + (this.state.human.buildings.sawmill * 5);
+                    this.state.human.stone += (this.state.human.pop * 0.02) + (this.state.human.buildings.quarry * 3);
 
                     this.state.demon.meat += this.state.demon.pop * 0.15;
                     this.state.demon.bone += this.state.demon.pop * 0.05;
