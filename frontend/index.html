@@ -219,23 +219,44 @@
                 const f = document.getElementById(`input-${target[0]}-funny`).value / 100;
                 const fake = Math.max(0, 1 - t - f);
 
-                // 核心逻辑搬迁：单机即时计算
-                if (target === 'human') {
-                    this.state.battle.hForce += t * 60;
-                    this.state.battle.hForce -= fake * 40;
-                    const saved = Math.floor(f * 30);
-                    this.state.human.pop += saved;
+                this.log(`补给商队已出发，预计 3 秒后抵达 ${target === 'human' ? '前线' : '深渊'}...`);
+
+                // 任务 3.3：延迟抵达逻辑
+                setTimeout(() => {
+                    // 任务 3.2：武器数值模型 (真货稳健，假货崩盘，搞怪截流)
+                    const sideKey = target === 'human' ? 'hForce' : 'dForce';
+                    
+                    // 1. 真货：稳健提升战力
+                    const trueBoost = t * 80;
+                    this.state.battle[sideKey] += trueBoost;
+
+                    // 2. 假货：虚假繁荣 (先加后大减)
+                    const fakeBoost = fake * 120;
+                    this.state.battle[sideKey] += fakeBoost;
+                    this.log(`${target === 'human' ? '人类' : '魔族'}由于领到大量物资，战力虚假暴涨！`);
+                    
+                    // 5秒后假货原形毕露
+                    setTimeout(() => {
+                        this.state.battle[sideKey] -= (fakeBoost + fake * 100);
+                        this.log(`⚠️ 警报！${target === 'human' ? '人类' : '魔族'}的补给中发现大量假货，战力发生崩盘！`);
+                        this.updateUI();
+                    }, 5000);
+
+                    // 3. 搞怪：截流人口 (救回逃兵)
+                    const saved = Math.floor(f * 35);
+                    if (target === 'human') {
+                        this.state.human.pop += saved;
+                    } else {
+                        this.state.demon.pop += saved;
+                    }
                     this.state.battle.peaceScore += saved * 10;
-                    this.log(`人类补给抵达：由于搞怪，成功救回 ${saved} 名逃兵！`);
-                } else {
-                    this.state.battle.dForce += t * 60;
-                    this.state.battle.dForce -= fake * 40;
-                    const saved = Math.floor(f * 30);
-                    this.state.demon.pop += saved;
-                    this.state.battle.peaceScore += saved * 10;
-                    this.log(`魔族补给抵达：${saved} 个恶魔被逗笑了，加入了领地建设！`);
-                }
-                this.updateUI();
+                    
+                    if (saved > 0) {
+                        this.log(`✨ 奇迹！通过大人的滑稽补给，成功从战场救回 ${saved} 名人口。`);
+                    }
+                    
+                    this.updateUI();
+                }, 3000);
             },
 
             log(msg) {
