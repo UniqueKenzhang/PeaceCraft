@@ -275,15 +275,18 @@
 
             loop() {
                 setInterval(() => {
-                    // 全效同步产出逻辑
-                    // 基础产出 + 建筑加成
-                    this.state.human.food += (this.state.human.pop * 0.15) + (this.state.human.buildings.farm * 2);
-                    this.state.human.wood += (this.state.human.pop * 0.05) + (this.state.human.buildings.sawmill * 5);
-                    this.state.human.stone += (this.state.human.pop * 0.02) + (this.state.human.buildings.quarry * 3);
+                    // 任务 2.3：人口驱动逻辑 (人口基数决定基础生产效率)
+                    const hMultiplier = 1 + (this.state.human.pop / 500); // 每500人产出翻倍
+                    const dMultiplier = 1 + (this.state.demon.pop / 500);
 
-                    this.state.demon.meat += (this.state.demon.pop * 0.15) + (this.state.demon.buildings.pit * 2);
-                    this.state.demon.bone += (this.state.demon.pop * 0.05) + (this.state.demon.buildings.rift * 5);
-                    this.state.demon.mana += (this.state.demon.pop * 0.02) + (this.state.demon.buildings.altar * 3);
+                    // 全效同步产出逻辑 (基础 + 建筑加成) * 人口乘数
+                    this.state.human.food += ((this.state.human.pop * 0.15) + (this.state.human.buildings.farm * 2)) * hMultiplier;
+                    this.state.human.wood += ((this.state.human.pop * 0.05) + (this.state.human.buildings.sawmill * 5)) * hMultiplier;
+                    this.state.human.stone += ((this.state.human.pop * 0.02) + (this.state.human.buildings.quarry * 3)) * hMultiplier;
+
+                    this.state.demon.meat += ((this.state.demon.pop * 0.15) + (this.state.demon.buildings.pit * 2)) * dMultiplier;
+                    this.state.demon.bone += ((this.state.demon.pop * 0.05) + (this.state.demon.buildings.rift * 5)) * dMultiplier;
+                    this.state.demon.mana += ((this.state.demon.pop * 0.02) + (this.state.demon.buildings.altar * 3)) * dMultiplier;
                     
                     // 战力随时间缓慢损耗 (模拟战争)
                     this.state.battle.hForce = Math.max(100, this.state.battle.hForce - 1);
