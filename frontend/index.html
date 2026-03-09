@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PeaceCraft - Anno Elite Edition</title>
+    <title>PeaceCraft - Anno Masterpiece v4.1</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Crimson+Pro:wght@300;400;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
@@ -14,6 +14,7 @@
         }
         body { font-family: 'Crimson Pro', serif; background-color: var(--bg-dark); color: #d4c5a9; overflow: hidden; margin: 0; user-select: none; }
         .stat-font { font-family: 'Cinzel', serif; }
+        .mono { font-family: 'JetBrains Mono', monospace; }
         
         #game-container { display: flex; width: 100vw; height: 100vh; }
         
@@ -21,164 +22,182 @@
         #sidebar { width: 320px; background: var(--bg-panel); border-right: 2px solid var(--border); display: flex; flex-direction: column; z-index: 50; box-shadow: 10px 0 30px rgba(0,0,0,0.5); }
         
         /* Top Navigation: Anno Influence Bar */
-        #top-bar { height: 60px; background: linear-gradient(to bottom, #231f1a, #1a1612); border-bottom: 1px solid var(--border); display: flex; align-items: center; px: 20px; z-index: 40; }
+        #top-bar { height: 60px; background: linear-gradient(to bottom, #231f1a, #1a1612); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 20px; z-index: 40; }
 
         /* Anno Circular Construction Menu style */
         .bld-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 15px; }
         .bld-item { 
             aspect-ratio: 1; background: var(--bg-card); border: 1px solid var(--border); 
             display: flex; flex-direction: column; align-items: center; justify-content: center; 
-            transition: all 0.2s; cursor: pointer; border-radius: 8px;
+            transition: all 0.2s; cursor: pointer; border-radius: 8px; position: relative;
         }
         .bld-item:hover { background: #3d3529; border-color: var(--gold); transform: translateY(-2px); }
         .bld-item.selected { border-color: var(--gold-bright); box-shadow: 0 0 15px rgba(201,168,76,0.3); background: #3d3529; }
         
+        /* Anno Cost Tooltip */
+        .bld-item:hover::after {
+            content: attr(data-cost); position: absolute; bottom: -25px; background: #000; color: var(--gold);
+            font-size: 9px; padding: 2px 6px; border-radius: 4px; z-index: 100; white-space: nowrap; font-family: 'JetBrains Mono';
+        }
+
         canvas { display: block; background: #000; cursor: crosshair; }
 
         /* Anno Notification Toasts */
         .anno-toast {
-            position: absolute; bottom: 100px; right: 20px; background: rgba(28, 24, 20, 0.9);
-            border-left: 4px solid var(--gold); padding: 12px 20px; border-radius: 4px;
-            font-size: 13px; transform: translateX(120%); transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: absolute; top: 80px; right: 20px; background: rgba(28, 24, 20, 0.95);
+            border-left: 4px solid var(--gold); padding: 15px 25px; border-radius: 2px;
+            font-size: 13px; transform: translateX(150%); transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 1000; box-shadow: 0 10px 40px rgba(0,0,0,0.8); border: 1px solid var(--border);
         }
         .anno-toast.show { transform: translateX(0); }
 
         .progress-track { height: 4px; background: #000; border-radius: 2px; overflow: hidden; }
         .progress-fill { height: 100%; background: var(--gold); transition: width 0.3s; }
+
+        /* Smooth Scene Transitions */
+        #scene-viewport { perspective: 1000px; }
+        canvas { transition: filter 0.5s ease; }
+        .scene-switching canvas { filter: blur(10px) brightness(0.5); }
     </style>
 </head>
 <body>
     <div id="game-container">
         <!-- ANNO SIDEBAR -->
         <div id="sidebar">
-            <div class="p-8 border-b border-white/5 text-center">
+            <div class="p-8 border-b border-white/5 text-center bg-black/20">
                 <h1 class="stat-font text-gold text-2xl tracking-[6px] font-black italic">ANNO</h1>
-                <p class="text-[9px] text-slate-500 uppercase tracking-[3px] mt-1">PeaceCraft Chronicles</p>
+                <p class="text-[9px] text-slate-500 uppercase tracking-[3px] mt-1">PeaceCraft Masterpiece</p>
             </div>
 
             <!-- Population & Needs -->
             <div class="p-6 space-y-6">
                 <div id="pop-section">
                     <div class="flex justify-between items-end mb-2">
-                        <span class="stat-font text-[11px] text-slate-400 uppercase">Population Level</span>
+                        <span class="stat-font text-[11px] text-slate-400 uppercase tracking-tighter">Empire Workforce</span>
                         <span id="ui-pop-count" class="mono text-gold text-sm font-bold">0</span>
                     </div>
                     <div class="progress-track"><div id="ui-pop-bar" class="progress-fill" style="width: 0%"></div></div>
-                    <div id="ui-pop-tiers" class="mt-4 grid grid-cols-2 gap-2"></div>
+                    <div id="ui-pop-tiers" class="mt-4 grid grid-cols-1 gap-2 border-t border-white/5 pt-4"></div>
                 </div>
 
                 <div class="border-t border-white/5 pt-6">
                     <span class="stat-font text-[11px] text-slate-400 uppercase block mb-4">Construction Bureau</span>
-                    <div class="flex gap-2 mb-4 bg-black/20 p-1 rounded-lg">
-                        <button onclick="Game.switchTab('raw')" id="tab-raw" class="flex-1 py-2 text-[9px] font-bold uppercase tab-btn active">Production</button>
-                        <button onclick="Game.switchTab('civil')" id="tab-civil" class="flex-1 py-2 text-[9px] font-bold uppercase tab-btn">Institutions</button>
+                    <div class="flex gap-2 mb-4 bg-black/20 p-1 rounded-lg border border-white/5">
+                        <button onclick="Game.switchTab('raw')" id="tab-raw" class="flex-1 py-2 text-[9px] font-bold uppercase tab-btn active">Basic Industry</button>
+                        <button onclick="Game.switchTab('civil')" id="tab-civil" class="flex-1 py-2 text-[9px] font-bold uppercase tab-btn">Urban Planning</button>
                     </div>
                     <div id="bld-grid" class="grid grid-cols-3 gap-2"></div>
                 </div>
             </div>
 
-            <div class="mt-auto p-6 bg-black/20 border-t border-white/5">
-                <div class="flex justify-between text-[10px] text-slate-500 mono mb-4">
-                    <span>STATUS</span>
-                    <span id="ui-server-status" class="text-green-500">OPTIMAL</span>
+            <div class="mt-auto p-6 bg-black/40 border-t-2 border-gold/20">
+                <div class="flex justify-between text-[10px] text-slate-500 mono mb-4 items-center">
+                    <div class="flex items-center gap-2">
+                        <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                        <span>ENGINE STATUS</span>
+                    </div>
+                    <span id="ui-server-status" class="text-white font-bold">STABLE</span>
                 </div>
-                <button onclick="Game.switchScene('battle')" class="w-full py-3 bg-slate-800 border border-white/10 text-white stat-font text-[10px] tracking-widest hover:bg-slate-700 transition-all">VIEW WAR THEATER</button>
+                <button onclick="Game.switchScene('battle')" class="w-full py-4 bg-gold hover:bg-gold-bright text-black stat-font text-[10px] font-black tracking-[3px] transition-all shadow-lg">GO TO FRONT LINE</button>
             </div>
         </div>
 
         <div id="main-area">
             <!-- ANNO INFO BAR -->
-            <div id="top-bar" class="px-8 flex items-center justify-between">
+            <div id="top-bar" class="flex items-center justify-between">
                 <div class="flex gap-10">
-                    <button onclick="Game.switchScene('human')" id="scene-human" class="stat-font text-xs tracking-widest hover:text-gold transition-all active">OLD WORLD (ALLIANCE)</button>
-                    <button onclick="Game.switchScene('demon')" id="scene-demon" class="stat-font text-xs tracking-widest hover:text-gold transition-all">NEW WORLD (LEGION)</button>
+                    <button onclick="Game.switchScene('human')" id="scene-human" class="stat-font text-[11px] tracking-[2px] font-bold hover:text-gold transition-all text-gold">OLD WORLD: ALLIANCE</button>
+                    <button onclick="Game.switchScene('demon')" id="scene-demon" class="stat-font text-[11px] tracking-[2px] font-bold hover:text-gold transition-all text-slate-500">NEW WORLD: LEGION</button>
                 </div>
 
-                <div id="res-bar" class="flex gap-6 items-center">
+                <div id="res-bar" class="flex gap-8 items-center bg-black/30 px-6 py-2 rounded-full border border-white/5">
                     <!-- Res Injected -->
                 </div>
 
-                <div class="flex items-center gap-8">
+                <div class="flex items-center gap-10">
                     <div class="text-right">
-                        <div class="text-[9px] text-slate-500 uppercase font-bold mono">Empire Balance</div>
-                        <div id="ui-peace" class="text-gold font-bold stat-font text-xl">0</div>
+                        <div class="text-[9px] text-slate-500 uppercase font-bold mono tracking-widest">Global Peace score</div>
+                        <div id="ui-peace" class="text-gold font-black stat-font text-2xl shadow-gold/20 drop-shadow-xl">0</div>
                     </div>
                 </div>
             </div>
 
             <!-- CANVAS -->
-            <div id="viewport" class="flex-1 relative overflow-hidden bg-black">
+            <div id="viewport" class="flex-1 relative overflow-hidden">
                 <canvas id="gameCanvas"></canvas>
                 
-                <!-- Supply Tooltip (Floating) -->
-                <div id="supply-ui" class="absolute bottom-10 left-1/2 -translate-x-1/2 bg-[#1c1814]/95 border-2 border-[#3d3529] p-8 rounded-sm shadow-2xl w-[600px] backdrop-blur-md">
-                    <div class="flex justify-between mb-6 items-center border-b border-white/5 pb-4">
-                        <span id="ui-force-side" class="stat-font text-sm uppercase text-gold tracking-widest">Supply Logistics</span>
-                        <div class="flex items-center gap-4">
-                            <span class="text-[10px] text-slate-500 mono">STRATEGIC FORCE</span>
-                            <span id="ui-force-val" class="mono text-white text-2xl font-black">500</span>
+                <!-- Supply Tooltip (Floating Anno Style) -->
+                <div id="supply-ui" class="absolute bottom-10 left-1/2 -translate-x-1/2 bg-[#1c1814]/98 border-2 border-[#c9a84c]/30 p-10 rounded-sm shadow-[0_30px_100px_rgba(0,0,0,0.9)] w-[650px] backdrop-blur-xl">
+                    <div class="flex justify-between mb-8 items-center border-b border-white/10 pb-6">
+                        <div class="flex flex-col">
+                            <span class="stat-font text-[10px] text-slate-500 uppercase tracking-[4px]">Strategic Supply Chain</span>
+                            <span id="ui-force-side" class="stat-font text-lg uppercase text-gold font-black mt-1">Old World Command</span>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-[9px] text-slate-500 mono block">CURRENT READINESS</span>
+                            <span id="ui-force-val" class="mono text-white text-4xl font-black italic">500</span>
                         </div>
                     </div>
-                    <div class="grid grid-cols-2 gap-12">
-                        <div class="space-y-4">
-                            <div class="flex justify-between text-[10px] uppercase tracking-tighter"><span>Industrial Munitions</span><span id="v-true" class="text-gold">50%</span></div>
+                    <div class="grid grid-cols-2 gap-16">
+                        <div class="space-y-6">
+                            <div class="flex justify-between text-[10px] uppercase font-bold tracking-widest text-slate-400"><span>True Weapons</span><span id="v-true" class="text-white">50%</span></div>
                             <input type="range" id="in-true" oninput="Game.upSlid()" class="w-full accent-gold h-1 bg-black rounded-none appearance-none cursor-pointer">
                         </div>
-                        <div class="space-y-4">
-                            <div class="flex justify-between text-[10px] uppercase tracking-tighter"><span>Experimental Gags</span><span id="v-funny" class="text-gold">50%</span></div>
+                        <div class="space-y-6">
+                            <div class="flex justify-between text-[10px] uppercase font-bold tracking-widest text-slate-400"><span>Joke Munitions</span><span id="v-funny" class="text-gold">50%</span></div>
                             <input type="range" id="in-funny" oninput="Game.upSlid()" class="w-full accent-gold h-1 bg-black rounded-none appearance-none cursor-pointer">
                         </div>
                     </div>
-                    <button onclick="Game.dispatch()" class="w-full mt-8 py-4 bg-gold hover:bg-gold-bright text-black font-black uppercase text-[11px] tracking-[4px] transition-all">Execute Transfer</button>
+                    <button onclick="Game.dispatch()" class="w-full mt-10 py-5 bg-gold hover:bg-gold-bright text-black font-black uppercase text-[12px] tracking-[6px] transition-all transform hover:scale-[1.02] active:scale-[0.98]">Authorize Convoy Deployment</button>
                 </div>
 
                 <!-- BATTLE OVERLAY -->
-                <div id="battle-view" class="hidden absolute inset-0 bg-[#0a0806]/90 flex flex-col items-center justify-center p-12 space-y-16">
-                    <div class="w-full max-w-3xl text-center space-y-6">
-                        <div class="stat-font text-sm tracking-[0.8em] text-slate-500 uppercase">Universal Equilibrium</div>
-                        <div class="relative h-2 bg-white/5 rounded-full overflow-hidden">
-                            <div id="ui-balance" class="h-full bg-gold shadow-[0_0_20px_#c9a84c] transition-all duration-1000" style="width: 50%"></div>
+                <div id="battle-view" class="hidden absolute inset-0 bg-[#0a0806]/95 flex flex-col items-center justify-center p-12 space-y-20">
+                    <div class="w-full max-w-4xl text-center space-y-8">
+                        <div class="stat-font text-sm tracking-[1em] text-gold/40 uppercase">Universal Balance Core</div>
+                        <div class="relative h-1 bg-white/5 rounded-full overflow-hidden">
+                            <div id="ui-balance" class="h-full bg-gold shadow-[0_0_30px_#c9a84c] transition-all duration-1000" style="width: 50%"></div>
                         </div>
                     </div>
-                    <div class="relative w-full flex items-center justify-between px-40">
-                        <div id="unit-h" class="w-32 h-32 border-2 border-blue-500/30 flex flex-col items-center justify-center bg-blue-500/5 rounded-full transition-all duration-1000">
-                            <span class="text-5xl">🛡️</span>
-                            <span class="text-[10px] mt-4 stat-font tracking-widest text-blue-400">ALLIANCE</span>
+                    <div class="relative w-full flex items-center justify-between px-48">
+                        <div id="unit-h" class="w-40 h-40 border border-blue-500/20 flex flex-col items-center justify-center bg-blue-500/5 rounded-none transition-all duration-1000 shadow-inner">
+                            <span class="text-6xl drop-shadow-[0_0_15px_rgba(59,130,246,0.5)]">🛡️</span>
+                            <span class="text-[11px] mt-6 stat-font tracking-[4px] font-bold text-blue-400">ALLIANCE</span>
                         </div>
-                        <div class="stat-font text-white/5 text-9xl font-black italic">VERSUS</div>
-                        <div id="unit-d" class="w-32 h-32 border-2 border-red-500/30 flex flex-col items-center justify-center bg-red-500/5 rounded-full transition-all duration-1000">
-                            <span class="text-5xl">🔥</span>
-                            <span class="text-[10px] mt-4 stat-font tracking-widest text-red-400">LEGION</span>
+                        <div class="stat-font text-white/5 text-[12rem] font-black italic select-none">VS</div>
+                        <div id="unit-d" class="w-40 h-40 border border-red-500/20 flex flex-col items-center justify-center bg-red-500/5 rounded-none transition-all duration-1000 shadow-inner">
+                            <span class="text-6xl drop-shadow-[0_0_15px_rgba(239,68,68,0.5)]">🔥</span>
+                            <span class="text-[11px] mt-6 stat-font tracking-[4px] font-bold text-red-400">LEGION</span>
                         </div>
                     </div>
-                    <div id="ui-log" class="w-full max-w-2xl h-40 border border-white/5 bg-black/40 p-6 overflow-y-auto mono text-[10px] text-slate-600 scroll-smooth leading-loose"></div>
+                    <div id="ui-log" class="w-full max-w-3xl h-48 border-t border-white/5 bg-black/40 p-8 overflow-y-auto mono text-[11px] text-slate-600 scroll-smooth leading-loose"></div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div id="anno-toast" class="anno-toast stat-font uppercase tracking-widest">Message received.</div>
+    <div id="anno-toast" class="anno-toast stat-font uppercase tracking-widest text-gold font-bold">Imperial Notice</div>
 
     <script>
-        const TILE = 48; const MAP_SZ = 40;
+        const TILE = 56; const MAP_SZ = 40;
         const Game = {
             state: {
-                human: { pop: 100, tiers: { peasant: 100, citizen: 0 }, food: 500, wood: 200, stone: 100, placed: [], camera: { x: 800, y: 800 }, selected: null },
-                demon: { pop: 100, tiers: { slave: 100, lord: 0 }, meat: 500, bone: 200, mana: 100, placed: [], camera: { x: 800, y: 800 }, selected: null },
+                human: { pop: 100, tiers: { peasant: 100, citizen: 0 }, food: 500, wood: 200, stone: 100, placed: [], camera: { x: 1000, y: 1000 }, selected: null },
+                demon: { pop: 100, tiers: { slave: 100, lord: 0 }, meat: 500, bone: 200, mana: 100, placed: [], camera: { x: 1000, y: 1000 }, selected: null },
                 battle: { hForce: 500, dForce: 500, peace: 0 },
                 scene: 'human', tab: 'raw', mouse: { x: 0, y: 0, gx: 0, gy: 0 }, drag: null
             },
 
             config: {
                 human: {
-                    farm: { name: 'FARM', icon: '🌾', size: [2,2], cat: 'raw', cost: { wood: 50 }, prod: { out: 'food', val: 5 } },
-                    sawmill: { name: 'SAWMILL', icon: '🪚', size: [1,1], cat: 'raw', cost: { stone: 80 }, prod: { out: 'wood', val: 3 } },
-                    quarry: { name: 'QUARRY', icon: '⛏️', size: [2,1], cat: 'raw', cost: { wood: 120 }, prod: { out: 'stone', val: 2 } }
+                    farm: { name: 'GRAIN FARM', icon: '🌾', size: [2,2], cat: 'raw', cost: { wood: 50 }, prod: { out: 'food', val: 8 } },
+                    sawmill: { name: 'TIMBER MILL', icon: '🪚', size: [1,1], cat: 'raw', cost: { stone: 80 }, prod: { out: 'wood', val: 5 } },
+                    quarry: { name: 'STONE QUARRY', icon: '⛏️', size: [2,1], cat: 'raw', cost: { wood: 120 }, prod: { out: 'stone', val: 3 } }
                 },
                 demon: {
-                    pit: { name: 'PIT', icon: '🥩', size: [2,2], cat: 'raw', cost: { bone: 50 }, prod: { out: 'meat', val: 5 } },
-                    altar: { name: 'ALTAR', icon: '💀', size: [1,1], cat: 'raw', cost: { mana: 80 }, prod: { out: 'bone', val: 3 } },
-                    rift: { name: 'RIFT', icon: '🌀', size: [2,1], cat: 'raw', cost: { bone: 120 }, prod: { out: 'mana', val: 2 } }
+                    pit: { name: 'BLOOD PIT', icon: '🥩', size: [2,2], cat: 'raw', cost: { bone: 50 }, prod: { out: 'meat', val: 8 } },
+                    altar: { name: 'SOUL ALTAR', icon: '💀', size: [1,1], cat: 'raw', cost: { mana: 80 }, prod: { out: 'bone', val: 5 } },
+                    rift: { name: 'VOID RIFT', icon: '🌀', size: [2,1], cat: 'raw', cost: { bone: 120 }, prod: { out: 'mana', val: 3 } }
                 }
             },
 
@@ -196,7 +215,7 @@
                 this.renderBldGrid();
                 this.loop();
                 requestAnimationFrame(t => this.draw(t));
-                this.toast("ANNO INTERFACE OPERATIONAL");
+                this.toast("IMPERIAL COMMAND CENTER LOADED");
             },
 
             resize() {
@@ -208,18 +227,23 @@
             toast(msg) {
                 const t = document.getElementById('anno-toast');
                 t.innerText = msg; t.classList.add('show');
-                setTimeout(() => t.classList.remove('show'), 3000);
+                setTimeout(() => t.classList.remove('show'), 4000);
             },
 
             switchScene(s) {
-                this.state.scene = s;
-                document.querySelectorAll('#top-bar .stat-font').forEach(b => b.classList.remove('text-gold'));
-                if (s !== 'battle') document.getElementById(`scene-${s}`).classList.add('text-gold');
-                
-                document.getElementById('battle-view').classList.toggle('hidden', s !== 'battle');
-                document.getElementById('supply-ui').classList.toggle('hidden', s === 'battle');
-                this.renderBldGrid();
-                this.updateUI();
+                if (this.state.scene === s) return;
+                document.body.classList.add('scene-switching');
+                setTimeout(() => {
+                    this.state.scene = s;
+                    document.querySelectorAll('#top-bar .stat-font').forEach(b => b.classList.replace('text-gold', 'text-slate-500'));
+                    if (s !== 'battle') document.getElementById(`scene-${s}`).classList.replace('text-slate-500', 'text-gold');
+                    
+                    document.getElementById('battle-view').classList.toggle('hidden', s !== 'battle');
+                    document.getElementById('supply-ui').classList.toggle('hidden', s === 'battle');
+                    this.renderBldGrid();
+                    this.updateUI();
+                    document.body.classList.remove('scene-switching');
+                }, 300);
             },
 
             switchTab(t) {
@@ -236,7 +260,9 @@
                     if (b.cat !== this.state.tab) return;
                     const item = document.createElement('div');
                     item.className = `bld-item ${this.state[s].selected === k ? 'selected' : ''}`;
-                    item.innerHTML = `<span class="text-xl">${b.icon}</span><span class="text-[8px] mt-2 font-bold">${b.name}</span>`;
+                    const costKey = Object.keys(b.cost)[0];
+                    item.setAttribute('data-cost', `${b.cost[costKey]} ${costKey.toUpperCase()}`);
+                    item.innerHTML = `<span class="text-2xl">${b.icon}</span><span class="text-[7px] mt-2 font-black tracking-widest text-slate-500">${b.name}</span>`;
                     item.onclick = () => { this.state[s].selected = (this.state[s].selected === k) ? null : k; this.renderBldGrid(); };
                     el.appendChild(item);
                 });
@@ -280,10 +306,10 @@
                         this.toast("SITE OCCUPIED"); return;
                     }
                 }
-                for(let r in b.cost) if (cur[r] < b.cost[r]) { this.toast("LACK OF RESOURCES"); return; }
+                for(let r in b.cost) if (cur[r] < b.cost[r]) { this.toast("IMPERIAL FUNDS INSUFFICIENT"); return; }
                 for(let r in b.cost) cur[r] -= b.cost[r];
                 cur.placed.push({ type, gx, gy });
-                this.toast(`${b.name} ESTABLISHED`);
+                this.toast(`${b.name} ASSEMBLED`);
                 this.updateUI();
             },
 
@@ -296,7 +322,7 @@
                 });
                 if (idx !== -1) { 
                     const p = cur.placed[idx]; for(let r in this.config[s][p.type].cost) cur[r] += Math.floor(this.config[s][p.type].cost[r] * 0.5);
-                    cur.placed.splice(idx, 1); this.toast("DECONSTRUCTION COMPLETE"); this.updateUI(); 
+                    cur.placed.splice(idx, 1); this.toast("STRUCTURE DISMANTLED"); this.updateUI(); 
                 }
             },
 
@@ -307,11 +333,11 @@
 
             dispatch() {
                 const s = this.state.scene;
-                this.log(`Convoy outbound to ${s} sector.`);
+                this.log(`Deployment protocol initialized for ${s} theatre.`);
+                this.toast("CONVOY EN ROUTE");
                 setTimeout(() => {
                     const key = s === 'human' ? 'hForce' : 'dForce';
-                    this.state.battle[key] += 150;
-                    this.toast("SUPPLY ARRIVED");
+                    this.state.battle[key] += 200;
                     this.updateUI();
                 }, 2000);
             },
@@ -321,35 +347,51 @@
                 const ctx = this.ctx; const cur = this.state[s]; const cam = cur.camera;
                 ctx.clearRect(0,0,this.canvas.width, this.canvas.height);
                 
-                // Terrain
+                // Terrain - Anno 1800 Style Grid
                 for(let y=0; y<MAP_SZ; y++) {
                     for(let x=0; x<MAP_SZ; x++) {
                         const sx = x*TILE - cam.x, sy = y*TILE - cam.y;
                         if (sx < -TILE || sy < -TILE || sx > this.canvas.width || sy > this.canvas.height) continue;
                         const water = x < 2 || y < 2 || x > MAP_SZ-3 || y > MAP_SZ-3;
-                        ctx.fillStyle = water ? '#1e3a52' : ((x+y)%2 ? '#2a361e' : '#222b18');
-                        ctx.fillRect(sx, sy, TILE, TILE);
-                        ctx.strokeStyle = 'rgba(255,255,255,0.02)'; ctx.strokeRect(sx, sy, TILE, TILE);
+                        if (water) {
+                            ctx.fillStyle = '#08121a';
+                            ctx.fillRect(sx, sy, TILE, TILE);
+                        } else {
+                            const checker = (x+y)%2;
+                            ctx.fillStyle = checker ? '#1a1f14' : '#161a10';
+                            ctx.fillRect(sx, sy, TILE, TILE);
+                            ctx.strokeStyle = 'rgba(201,168,76,0.03)'; ctx.lineWidth = 1; ctx.strokeRect(sx, sy, TILE, TILE);
+                        }
                     }
                 }
 
-                // Buildings
+                // Buildings - Anno Aesthetic
                 cur.placed.forEach(p => {
                     const b = this.config[s][p.type];
                     const sx = p.gx*TILE - cam.x, sy = p.gy*TILE - cam.y;
-                    ctx.fillStyle = '#2a241e'; ctx.shadowBlur = 10; ctx.shadowColor = 'black';
-                    ctx.fillRect(sx+4, sy+4, b.size[0]*TILE-8, b.size[1]*TILE-8);
-                    ctx.shadowBlur = 0;
-                    ctx.strokeStyle = '#c9a84c44'; ctx.lineWidth = 1; ctx.strokeRect(sx+4, sy+4, b.size[0]*TILE-8, b.size[1]*TILE-8);
-                    ctx.fillStyle = 'white'; ctx.font = '24px serif'; ctx.textAlign = 'center';
-                    ctx.fillText(b.icon, sx + (b.size[0]*TILE)/2, sy + (b.size[1]*TILE)/2 + 8);
+                    const w = b.size[0]*TILE, h = b.size[1]*TILE;
+                    
+                    // Shadow & Base
+                    ctx.fillStyle = 'black'; ctx.globalAlpha = 0.5;
+                    ctx.fillRect(sx+6, sy+6, w, h);
+                    ctx.globalAlpha = 1;
+                    
+                    ctx.fillStyle = '#2a241e';
+                    ctx.fillRect(sx+2, sy+2, w-4, h-4);
+                    
+                    // Golden Frame
+                    ctx.strokeStyle = '#c9a84c'; ctx.lineWidth = 0.5;
+                    ctx.strokeRect(sx+4, sy+4, w-8, h-8);
+                    
+                    ctx.fillStyle = 'white'; ctx.font = '28px serif'; ctx.textAlign = 'center';
+                    ctx.fillText(b.icon, sx + w/2, sy + h/2 + 10);
                 });
 
-                // Anno Ghost Preview
+                // Ghost Preview
                 if (cur.selected) {
                     const b = this.config[s][cur.selected];
                     const gx = this.state.mouse.gx, gy = this.state.mouse.gy;
-                    ctx.globalAlpha = 0.3; ctx.fillStyle = '#c9a84c';
+                    ctx.globalAlpha = 0.2; ctx.fillStyle = '#c9a84c';
                     ctx.fillRect(gx*TILE - cam.x, gy*TILE - cam.y, b.size[0]*TILE, b.size[1]*TILE);
                     ctx.globalAlpha = 1;
                 }
@@ -358,7 +400,7 @@
 
             log(m) {
                 const l = document.getElementById('ui-log');
-                const p = document.createElement('p'); p.innerHTML = `<span class="text-white/10">[CHRONICLE]</span> ${m}`;
+                const p = document.createElement('p'); p.innerHTML = `<span class="text-gold/20 mr-4 font-bold">LOG</span> ${m}`;
                 l.prepend(p);
             },
 
@@ -367,21 +409,21 @@
                 const h = this.state.human, d = this.state.demon, b = this.state.battle;
                 
                 document.getElementById('res-bar').innerHTML = s === 'human' ? `
-                    <div class="flex items-center gap-2">🌾 <span class="text-white">${Math.floor(h.food)}</span></div>
-                    <div class="flex items-center gap-2">🪵 <span class="text-white">${Math.floor(h.wood)}</span></div>
-                    <div class="flex items-center gap-2">🪨 <span class="text-white">${Math.floor(h.stone)}</span></div>
+                    <div class="flex items-center gap-3"><span class="text-lg">🌾</span><span class="text-white font-bold mono">${Math.floor(h.food)}</span></div>
+                    <div class="flex items-center gap-3"><span class="text-lg">🪵</span><span class="text-white font-bold mono">${Math.floor(h.wood)}</span></div>
+                    <div class="flex items-center gap-3"><span class="text-lg">🪨</span><span class="text-white font-bold mono">${Math.floor(h.stone)}</span></div>
                 ` : `
-                    <div class="flex items-center gap-2">🥩 <span class="text-white">${Math.floor(d.meat)}</span></div>
-                    <div class="flex items-center gap-2">💀 <span class="text-white">${Math.floor(d.bone)}</span></div>
-                    <div class="flex items-center gap-2">🌀 <span class="text-white">${Math.floor(d.mana)}</span></div>
+                    <div class="flex items-center gap-3"><span class="text-lg">🥩</span><span class="text-white font-bold mono">${Math.floor(d.meat)}</span></div>
+                    <div class="flex items-center gap-3"><span class="text-lg">💀</span><span class="text-white font-bold mono">${Math.floor(d.bone)}</span></div>
+                    <div class="flex items-center gap-3"><span class="text-lg">🌀</span><span class="text-white font-bold mono">${Math.floor(d.mana)}</span></div>
                 `;
 
-                const totalPop = h.pop + d.pop;
+                const totalPop = Math.floor(h.pop + d.pop);
                 document.getElementById('ui-pop-count').innerText = totalPop;
-                document.getElementById('ui-pop-bar').style.width = (totalPop / 20) + '%';
+                document.getElementById('ui-pop-bar').style.width = Math.min(100, (totalPop / 10)) + '%';
                 document.getElementById('ui-pop-tiers').innerHTML = s === 'human' ? 
-                    `<div class="flex justify-between"><span>Peasants</span><span>${h.tiers.peasant}</span></div><div class="flex justify-between"><span>Citizens</span><span>${h.tiers.citizen}</span></div>` :
-                    `<div class="flex justify-between"><span>Slaves</span><span>${d.tiers.slave}</span></div><div class="flex justify-between"><span>Lords</span><span>${d.tiers.lord}</span></div>`;
+                    `<div class="flex justify-between px-2 bg-white/5 py-1"><span>PEASANT CLASS</span><span class="text-white">${Math.floor(h.tiers.peasant)}</span></div><div class="flex justify-between px-2 py-1"><span>CITIZEN CLASS</span><span class="text-white">${Math.floor(h.tiers.citizen)}</span></div>` :
+                    `<div class="flex justify-between px-2 bg-white/5 py-1"><span>SLAVE CLASS</span><span class="text-white">${Math.floor(d.tiers.slave)}</span></div><div class="flex justify-between px-2 py-1"><span>LORD CLASS</span><span class="text-white">${Math.floor(d.tiers.lord)}</span></div>`;
                 
                 document.getElementById('ui-peace').innerText = b.peace;
                 const balance = (b.hForce / (b.hForce + b.dForce)) * 100;
@@ -392,7 +434,7 @@
             loop() {
                 setInterval(() => {
                     const h = this.state.human, d = this.state.demon, b = this.state.battle;
-                    h.food -= h.pop * 0.05; d.meat -= d.pop * 0.05;
+                    h.food -= h.pop * 0.03; d.meat -= d.pop * 0.03;
                     h.placed.forEach(p => h[this.config.human[p.type].prod.out] += this.config.human[p.type].prod.val);
                     d.placed.forEach(p => d[this.config.demon[p.type].prod.out] += this.config.demon[p.type].prod.val);
                     b.hForce += (Math.random()*4 - 2); b.dForce += (Math.random()*4 - 2);
