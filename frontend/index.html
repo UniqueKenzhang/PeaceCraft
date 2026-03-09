@@ -85,8 +85,16 @@
                             <span>LEGION</span>
                         </div>
                     </div>
-                    <p class="text-amber-600 text-xs font-bold animate-pulse">! 平衡偏离安全区 (40-60%) 将触发灭世警告 !</p>
+                    <p id="ui-warning" class="text-amber-600 text-xs font-bold animate-pulse">! 平衡偏离安全区 (40-60%) 将触发灭世警告 !</p>
                 </div>
+
+                <!-- 任务 4.3：演兵画面 (动态方阵) -->
+                <div class="relative h-40 bg-slate-900/50 rounded-3xl border border-slate-800 overflow-hidden flex items-center justify-center">
+                    <div id="unit-human" class="absolute w-16 h-16 bg-blue-600 rounded-lg shadow-[0_0_15px_rgba(37,99,235,0.5)] flex items-center justify-center text-2xl transition-all duration-1000" style="left: 20%;">🛡️</div>
+                    <div class="text-slate-700 font-black text-4xl opacity-20 select-none">VS</div>
+                    <div id="unit-demon" class="absolute w-16 h-16 bg-red-600 rounded-lg shadow-[0_0_15px_rgba(220,38,38,0.5)] flex items-center justify-center text-2xl transition-all duration-1000" style="right: 20%;">🔥</div>
+                </div>
+
                 <div id="ui-battle-log" class="bg-black/40 rounded-3xl p-6 h-60 overflow-y-auto font-mono text-sm text-slate-500 border border-slate-800/50 leading-relaxed">
                     <p class="text-slate-700">> [SYSTEM] 战场监控已就绪...</p>
                 </div>
@@ -294,6 +302,24 @@
                 const balance = (this.state.battle.hForce / total) * 100;
                 document.getElementById('ui-balance-bar').style.width = `${balance}%`;
                 document.getElementById('ui-peace-score').innerText = this.state.battle.peaceScore;
+
+                // 任务 4.3：更新演兵方阵位置
+                const hUnit = document.getElementById('unit-human');
+                const dUnit = document.getElementById('unit-demon');
+                hUnit.style.left = `${balance * 0.8}%`;
+                dUnit.style.right = `${(100 - balance) * 0.8}%`;
+
+                // 警告提示
+                const warning = document.getElementById('ui-warning');
+                if (balance < 35 || balance > 65) {
+                    warning.classList.remove('text-slate-500');
+                    warning.classList.add('text-red-500', 'animate-bounce');
+                    warning.innerText = "🚨 极度危险：一方文明即将启动终极手段！";
+                } else {
+                    warning.classList.remove('text-red-500', 'animate-bounce');
+                    warning.classList.add('text-amber-600');
+                    warning.innerText = "! 平衡偏离安全区 (40-60%) 将触发灭世警告 !";
+                }
             },
 
             loop() {
