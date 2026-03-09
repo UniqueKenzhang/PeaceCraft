@@ -3,209 +3,146 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PeaceCraft - 天平之祭 (Anno Builder Edition)</title>
+    <title>PeaceCraft - 天平之祭 (Vast Map Edition)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Crimson+Pro:wght@300;400;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-dark: #0f172a;
-            --bg-panel: #1e293b;
-            --gold: #c9a84c;
-            --gold-bright: #e8c84a;
-            --alliance: #2563eb;
-            --legion: #dc2626;
+            --bg-dark: #1a1612; --bg-panel: #231f1a; --bg-card: #2c2620;
+            --gold: #c9a84c; --gold-bright: #e8c84a; --border: #3d3529;
         }
-        body { 
-            font-family: 'Crimson Pro', serif; 
-            background-color: var(--bg-dark); 
-            color: #d4c5a9; 
-            overflow: hidden; 
-        }
+        body { font-family: 'Crimson Pro', serif; background-color: var(--bg-dark); color: #d4c5a9; overflow: hidden; margin: 0; }
         .stat-font { font-family: 'Cinzel', serif; }
         .mono { font-family: 'JetBrains Mono', monospace; }
         
-        /* Anno-style Grid */
-        .anno-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 8px;
-            background: rgba(0,0,0,0.3);
-            padding: 12px;
-            border-radius: 16px;
-            border: 1px solid rgba(201,168,76,0.2);
-        }
-        .anno-cell {
-            aspect-ratio: 1;
-            background: rgba(30, 41, 59, 0.5);
-            border: 1px solid rgba(255,255,255,0.05);
-            border-radius: 8px;
-            cursor: pointer;
-            position: relative;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-        }
-        .anno-cell:hover {
-            border-color: var(--gold);
-            background: rgba(201,168,76,0.1);
-        }
-        .anno-cell.fertile {
-            background: rgba(34, 197, 94, 0.1);
-            border-color: rgba(34, 197, 94, 0.3);
-        }
-        .anno-cell.fertile::before {
-            content: '🌱';
-            position: absolute;
-            top: 2px;
-            right: 2px;
-            font-size: 0.6rem;
-            opacity: 0.5;
-        }
+        #game-container { display: flex; width: 100vw; height: 100vh; }
+        #sidebar { width: 300px; min-width: 300px; background: var(--bg-panel); border-right: 1px solid var(--border); display: flex; flex-direction: column; z-index: 10; }
+        #main-area { flex: 1; display: flex; flex-direction: column; position: relative; }
+        
+        canvas { display: block; background: #1e3a52; cursor: grab; }
+        canvas:active { cursor: grabbing; }
 
-        /* Preview Ghost */
-        .anno-cell.preview::after {
-            content: attr(data-icon);
-            opacity: 0.3;
-            filter: grayscale(1);
-            animation: pulse 1.5s infinite;
-        }
-        @keyframes pulse { 0%, 100% { transform: scale(0.9); opacity: 0.2; } 50% { transform: scale(1.1); opacity: 0.5; } }
+        /* Anno Tabs */
+        .tab-btn { font-family: 'Cinzel', serif; letter-spacing: 1px; color: #8a7e6a; transition: all 0.2s; border-bottom: 2px solid transparent; }
+        .tab-btn.active { color: var(--gold); border-bottom-color: var(--gold); }
 
-        /* Tabs */
-        .tab-btn {
-            font-family: 'Cinzel', serif;
-            letter-spacing: 1px;
-            transition: all 0.3s;
-        }
-        .tab-btn.active {
-            color: var(--gold);
-            border-bottom: 2px solid var(--gold);
-        }
+        /* Scrollbar */
+        #bld-list::-webkit-scrollbar { width: 4px; }
+        #bld-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
-        /* Building Card */
-        .bld-card {
-            background: var(--bg-panel);
-            border: 1px solid rgba(255,255,255,0.05);
-            transition: all 0.2s;
-        }
-        .bld-card.selected {
-            border-color: var(--gold);
-            box-shadow: 0 0 15px rgba(201,168,76,0.2);
-            background: rgba(201,168,76,0.05);
-        }
+        .bld-card { background: var(--bg-card); border: 1px solid var(--border); transition: all 0.15s; cursor: pointer; }
+        .bld-card:hover { background: #362f28; border-color: #544a3c; }
+        .bld-card.selected { border-color: var(--gold); box-shadow: 0 0 12px rgba(201,168,76,0.15); }
     </style>
 </head>
-<body class="bg-slate-950 text-slate-200">
-    <div id="game-app" class="max-w-5xl mx-auto h-screen flex flex-col p-4">
-        
-        <!-- Top Resource Bar (Anno Style) -->
-        <div class="flex items-center gap-4 bg-slate-900/80 p-3 rounded-2xl border border-slate-800 mb-4 overflow-x-auto mono text-xs">
-            <div class="flex items-center gap-2 bg-black/20 px-3 py-1 rounded-md border border-white/5">
-                <span id="ui-weather-icon">☀️</span>
-                <span id="ui-weather-text" class="text-amber-500">Normal</span>
+<body>
+    <div id="game-container">
+        <!-- Sidebar -->
+        <div id="sidebar">
+            <div class="p-6 border-b border-white/5">
+                <h1 class="stat-font text-gold text-xl tracking-[4px] font-bold">PEACECRAFT</h1>
+                <p class="text-[10px] text-slate-500 uppercase tracking-widest mt-1">Sacrifice of Balance</p>
             </div>
-            <div class="h-4 w-px bg-slate-700"></div>
-            <div class="flex items-center gap-3">
-                <div class="flex items-center gap-1"><span>🌾</span><span id="ui-res-food">0</span></div>
-                <div class="flex items-center gap-1"><span>🪵</span><span id="ui-res-wood">0</span></div>
-                <div class="flex items-center gap-1"><span>🪨</span><span id="ui-res-stone">0</span></div>
+
+            <div class="p-6 border-b border-white/5">
+                <div class="flex justify-between text-[10px] uppercase font-bold text-slate-500 mb-2">
+                    <span>Population</span>
+                    <span id="ui-pop-val" class="text-gold mono">0 / 0</span>
+                </div>
+                <div class="h-1 bg-black/40 rounded-full overflow-hidden">
+                    <div id="ui-pop-bar" class="h-full bg-gold w-0 transition-all"></div>
+                </div>
+                <div id="ui-tiers" class="mt-4 space-y-1 text-[10px] mono text-slate-400">
+                    <!-- Tiers -->
+                </div>
             </div>
-            <div class="h-4 w-px bg-slate-700"></div>
-            <div class="flex items-center gap-3">
-                <div class="flex items-center gap-1"><span>🥩</span><span id="ui-res-meat">0</span></div>
-                <div class="flex items-center gap-1"><span>💀</span><span id="ui-res-bone">0</span></div>
-                <div class="flex items-center gap-1"><span>🌀</span><span id="ui-res-mana">0</span></div>
+
+            <!-- Building Tabs -->
+            <div class="flex border-b border-white/5 bg-black/10">
+                <button onclick="Game.switchTab('raw')" id="tab-raw" class="flex-1 py-3 text-[10px] font-black uppercase tab-btn active">Raw</button>
+                <button onclick="Game.switchTab('civil')" id="tab-civil" class="flex-1 py-3 text-[10px] font-black uppercase tab-btn">Civil</button>
             </div>
-            <div class="flex-1"></div>
-            <div class="flex items-center gap-2 font-bold">
-                <span class="text-slate-500">PEACE:</span>
-                <span id="ui-peace-score" class="text-gold text-lg">0</span>
+
+            <div id="bld-list" class="flex-1 overflow-y-auto p-4 space-y-3">
+                <!-- Buildings -->
+            </div>
+
+            <div class="p-4 bg-black/20 text-[10px] text-center border-t border-white/5 mono text-slate-600">
+                RIGHT-CLICK TO DEMOLISH • DRAG TO PAN
             </div>
         </div>
 
-        <!-- Main Workspace -->
-        <div class="flex-1 flex gap-6 min-h-0">
-            
-            <!-- Left: Sidebar (Buildings & Stats) -->
-            <div class="w-72 flex flex-col bg-slate-900/50 rounded-3xl border border-slate-800 p-6">
-                <div class="mb-6">
-                    <h1 class="stat-font text-gold text-xl tracking-widest border-b border-gold/20 pb-2 mb-4">COLONY</h1>
-                    <div class="flex justify-between items-end mb-1">
-                        <span class="text-[10px] text-slate-500 font-bold uppercase">Population</span>
-                        <span id="ui-pop-count" class="mono text-gold text-sm">0 / 0</span>
+        <!-- Main Area -->
+        <div id="main-area">
+            <!-- Top Bar -->
+            <div class="h-14 bg-slate-900/90 border-b border-border flex items-center px-6 gap-6 z-20">
+                <nav class="flex gap-6 mr-8">
+                    <button onclick="Game.switchScene('human')" id="scene-human" class="tab-btn active text-xs font-bold uppercase">Alliance</button>
+                    <button onclick="Game.switchScene('demon')" id="scene-demon" class="tab-btn text-xs font-bold uppercase">Legion</button>
+                    <button onclick="Game.switchScene('battle')" id="scene-battle" class="tab-btn text-xs font-bold uppercase">Battlefield</button>
+                </nav>
+                
+                <div class="flex gap-4 mono text-[11px] items-center">
+                    <div class="flex items-center gap-1.5 bg-black/20 px-2 py-1 rounded border border-white/5">
+                        <span>🌾</span><span id="ui-res-food" class="text-white">0</span>
                     </div>
-                    <div class="h-1 bg-black/40 rounded-full overflow-hidden">
-                        <div id="ui-pop-fill" class="h-full bg-gold transition-all" style="width: 20%"></div>
+                    <div class="flex items-center gap-1.5 bg-black/20 px-2 py-1 rounded border border-white/5">
+                        <span>🪵</span><span id="ui-res-wood" class="text-white">0</span>
                     </div>
-                    <div id="ui-pop-tiers" class="mt-3 space-y-1 text-[10px] mono text-slate-400">
-                        <!-- Tiers injected here -->
+                    <div class="flex items-center gap-1.5 bg-black/20 px-2 py-1 rounded border border-white/5">
+                        <span>🪨</span><span id="ui-res-stone" class="text-white">0</span>
+                    </div>
+                    <div class="w-px h-4 bg-white/10 mx-2"></div>
+                    <div class="flex items-center gap-1.5 bg-black/20 px-2 py-1 rounded border border-white/5">
+                        <span>🥩</span><span id="ui-res-meat" class="text-white">0</span>
+                    </div>
+                    <div class="flex items-center gap-1.5 bg-black/20 px-2 py-1 rounded border border-white/5">
+                        <span>💀</span><span id="ui-res-bone" class="text-white">0</span>
                     </div>
                 </div>
 
-                <div class="flex-1 overflow-y-auto pr-2 space-y-3" id="ui-building-list">
-                    <!-- Buildings injected here -->
+                <div class="flex-1"></div>
+                
+                <div class="flex items-center gap-4">
+                    <div class="text-right">
+                        <div class="text-[9px] text-slate-500 uppercase font-bold mono">Peace score</div>
+                        <div id="ui-peace" class="text-gold font-bold stat-font">0</div>
+                    </div>
                 </div>
             </div>
 
-            <!-- Right: Map & Battle -->
-            <div class="flex-1 flex flex-col gap-6">
-                <!-- Tabs -->
-                <div class="flex gap-8 border-b border-slate-800">
-                    <button onclick="Game.switchScene('human')" id="tab-human" class="tab-btn px-4 py-2 text-sm font-bold active">🏰 Human Alliance</button>
-                    <button onclick="Game.switchScene('demon')" id="tab-demon" class="tab-btn px-4 py-2 text-sm font-bold">🔥 Demon Legion</button>
-                    <button onclick="Game.switchScene('battle')" id="tab-battle" class="tab-btn px-4 py-2 text-sm font-bold">⚖️ Battlefield</button>
+            <!-- Canvas Viewport -->
+            <div id="viewport" class="flex-1 relative overflow-hidden bg-[#1e3a52]">
+                <canvas id="gameCanvas"></canvas>
+                
+                <!-- Supply Panel Overlay -->
+                <div id="supply-ui" class="absolute bottom-6 left-1/2 -translate-x-1/2 bg-slate-900/90 p-6 rounded-3xl border border-white/10 backdrop-blur-xl shadow-2xl w-[500px]">
+                    <div class="flex justify-between mb-4 items-center">
+                        <span id="ui-force-side" class="stat-font text-xs uppercase text-gold">Alliance Front</span>
+                        <span id="ui-force-val" class="mono text-white text-lg">500</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-8">
+                        <input type="range" id="in-true" class="w-full accent-gold h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer">
+                        <input type="range" id="in-funny" class="w-full accent-gold h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer">
+                    </div>
+                    <button onclick="Game.dispatch()" class="w-full mt-6 py-3 bg-gold hover:bg-gold-bright text-slate-900 font-black rounded-xl uppercase text-xs transition-all">Dispatch Convoy</button>
                 </div>
 
-                <div id="scene-viewport" class="flex-1 relative">
-                    <!-- Map View (Human/Demon) -->
-                    <div id="view-map" class="h-full flex flex-col gap-6">
-                        <div class="flex-1 flex items-center justify-center">
-                            <div class="anno-grid w-96 h-96" id="ui-map-grid">
-                                <!-- 16 Cells -->
-                            </div>
-                        </div>
-                        
-                        <!-- Supply Controls -->
-                        <div class="bg-slate-900/80 p-6 rounded-3xl border border-slate-800">
-                            <div class="flex justify-between items-center mb-4">
-                                <h3 class="stat-font text-sm uppercase tracking-widest text-slate-400">Frontline Supply</h3>
-                                <div id="ui-force-display" class="mono text-lg text-white">FORCE: 500</div>
-                            </div>
-                            <div class="grid grid-cols-2 gap-8">
-                                <div class="space-y-4">
-                                    <div class="flex justify-between text-[10px] mono"><span>Steel Weapons</span><span id="ui-val-true">50%</span></div>
-                                    <input type="range" id="input-true" oninput="Game.updateSliders()" class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-gold">
-                                </div>
-                                <div class="space-y-4">
-                                    <div class="flex justify-between text-[10px] mono"><span>Funny Gags</span><span id="ui-val-funny">50%</span></div>
-                                    <input type="range" id="input-funny" oninput="Game.updateSliders()" class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-gold">
-                                </div>
-                            </div>
-                            <button onclick="Game.executeSupply()" class="w-full mt-6 py-4 bg-gold hover:bg-gold-bright text-slate-900 font-black rounded-xl transition-all uppercase tracking-tighter">Dispatch Convoy</button>
+                <!-- Battle Overlay -->
+                <div id="battle-view" class="hidden absolute inset-0 bg-black/60 flex flex-col items-center justify-center p-12 space-y-12">
+                    <div class="w-full max-w-2xl text-center space-y-4">
+                        <div class="stat-font text-xs tracking-[0.5em] text-slate-500 uppercase">Equilibrium Status</div>
+                        <div class="relative h-14 bg-black/80 rounded-2xl border-2 border-slate-800 overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.5)]">
+                            <div id="ui-balance" class="h-full bg-gradient-to-r from-blue-600 via-gold to-red-600 transition-all duration-700" style="width: 50%"></div>
                         </div>
                     </div>
-
-                    <!-- Battle View (Hidden by default) -->
-                    <div id="view-battle" class="hidden h-full flex flex-col items-center justify-center space-y-12">
-                        <div class="w-full max-w-2xl text-center space-y-4">
-                            <div class="stat-font text-xs tracking-widest text-slate-500 uppercase">Universal Balance</div>
-                            <div class="relative h-12 bg-black/40 rounded-xl border-2 border-slate-800 overflow-hidden">
-                                <div id="ui-balance-bar" class="h-full bg-gradient-to-r from-blue-600 via-gold to-red-600 transition-all duration-700" style="width: 50%"></div>
-                            </div>
-                            <div id="ui-warning" class="text-[10px] font-bold text-amber-600 animate-pulse uppercase tracking-widest">! Equilibrium Stable !</div>
-                        </div>
-
-                        <div class="relative w-full h-48 flex items-center justify-center bg-slate-900/20 rounded-[3rem] border border-white/5">
-                            <div id="unit-human" class="absolute w-20 h-20 bg-blue-600/20 border-2 border-blue-500 rounded-2xl flex items-center justify-center text-3xl transition-all duration-1000 shadow-[0_0_30px_rgba(37,99,235,0.2)]" style="left: 20%">🛡️</div>
-                            <div class="text-slate-800 font-black text-6xl opacity-10 select-none italic">VS</div>
-                            <div id="unit-demon" class="absolute w-20 h-20 bg-red-600/20 border-2 border-red-500 rounded-2xl flex items-center justify-center text-3xl transition-all duration-1000 shadow-[0_0_30px_rgba(220,38,38,0.2)]" style="right: 20%">🔥</div>
-                        </div>
-
-                        <div id="ui-log" class="w-full max-w-2xl h-48 bg-black/40 rounded-2xl p-4 overflow-y-auto mono text-[10px] text-slate-500 border border-white/5 leading-relaxed">
-                            <p class="text-gold/60">> Chronicle initialized. Awaiting Dragon King's command...</p>
-                        </div>
+                    <div class="relative w-full h-64 flex items-center justify-center">
+                        <div id="unit-h" class="absolute w-24 h-24 bg-blue-600/20 border-2 border-blue-500 rounded-3xl flex items-center justify-center text-4xl transition-all duration-1000 shadow-[0_0_40px_rgba(37,99,235,0.3)]" style="left: 20%">🛡️</div>
+                        <div class="text-slate-800 font-black text-8xl opacity-10 italic">VS</div>
+                        <div id="unit-d" class="absolute w-24 h-24 bg-red-600/20 border-2 border-red-500 rounded-3xl flex items-center justify-center text-4xl transition-all duration-1000 shadow-[0_0_40px_rgba(220,38,38,0.3)]" style="right: 20%">🔥</div>
+                    </div>
+                    <div id="ui-log" class="w-full max-w-2xl h-40 bg-black/60 rounded-2xl p-6 overflow-y-auto mono text-[10px] text-slate-500 border border-white/5 scroll-smooth">
+                        <p>> Equilibrium operational. Awaiting orders...</p>
                     </div>
                 </div>
             </div>
@@ -213,259 +150,226 @@
     </div>
 
     <script>
+        const TILE = 40; const MAP_SZ = 40;
         const Game = {
             state: {
-                human: { 
-                    pop: 100, tiers: { peasant: 100, citizen: 0 }, 
-                    food: 500, wood: 200, stone: 100, 
-                    grid: Array(16).fill(null), fertility: [2, 5, 11],
-                    buildings: { farm: 0, sawmill: 0, quarry: 0 }, selected: null 
-                },
-                demon: { 
-                    pop: 100, tiers: { slave: 100, lord: 0 }, 
-                    meat: 500, bone: 200, mana: 100, 
-                    grid: Array(16).fill(null), fertility: [3, 8, 14],
-                    buildings: { pit: 0, altar: 0, rift: 0 }, selected: null 
-                },
-                battle: { hForce: 500, dForce: 500, peaceScore: 0, isGameOver: false },
-                activeScene: 'human', weather: '☀️ Clear', weatherBoost: 1.0
+                human: { pop: 100, tiers: { peasant: 100, citizen: 0 }, food: 500, wood: 200, stone: 100, placed: [], camera: { x: 600, y: 600 }, selected: null },
+                demon: { pop: 100, tiers: { slave: 100, lord: 0 }, meat: 500, bone: 200, mana: 100, placed: [], camera: { x: 600, y: 600 }, selected: null },
+                battle: { hForce: 500, dForce: 500, peace: 0 },
+                scene: 'human', tab: 'raw', mouse: { x: 0, y: 0, gx: 0, gy: 0 }, drag: null
             },
 
             config: {
                 human: {
-                    farm: { name: 'Wheat Farm', icon: '🌾', cost: { wood: 50 }, prod: { out: 'food', val: 5 } },
-                    sawmill: { name: 'Sawmill', icon: '🪚', cost: { stone: 100 }, prod: { out: 'wood', val: 3 } },
-                    quarry: { name: 'Quarry', icon: '⛏️', cost: { wood: 150 }, prod: { out: 'stone', val: 2 } }
+                    farm: { name: 'Farm', icon: '🌾', size: [2,2], cat: 'raw', cost: { wood: 50 }, prod: { out: 'food', val: 5 } },
+                    sawmill: { name: 'Sawmill', icon: '🪚', size: [1,1], cat: 'raw', cost: { stone: 80 }, prod: { out: 'wood', val: 3 } },
+                    quarry: { name: 'Quarry', icon: '⛏️', size: [2,1], cat: 'raw', cost: { wood: 120 }, prod: { out: 'stone', val: 2 } }
                 },
                 demon: {
-                    pit: { name: 'Flesh Pit', icon: '🥩', cost: { bone: 50 }, prod: { out: 'meat', val: 5 } },
-                    altar: { name: 'Soul Altar', icon: '💀', cost: { mana: 100 }, prod: { out: 'bone', val: 3 } },
-                    rift: { name: 'Void Rift', icon: '🌀', cost: { bone: 150 }, prod: { out: 'mana', val: 2 } }
+                    pit: { name: 'Flesh Pit', icon: '🥩', size: [2,2], cat: 'raw', cost: { bone: 50 }, prod: { out: 'meat', val: 5 } },
+                    altar: { name: 'Altar', icon: '💀', size: [1,1], cat: 'raw', cost: { mana: 80 }, prod: { out: 'bone', val: 3 } },
+                    rift: { name: 'Void Rift', icon: '🌀', size: [2,1], cat: 'raw', cost: { bone: 120 }, prod: { out: 'mana', val: 2 } }
                 }
             },
 
             init() {
-                window.Game = this;
-                this.renderBuildingList();
-                this.renderGrid();
+                this.canvas = document.getElementById('gameCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                window.addEventListener('resize', () => this.resize());
+                this.resize();
+                
+                this.canvas.addEventListener('mousedown', e => this.onDown(e));
+                window.addEventListener('mousemove', e => this.onMove(e));
+                window.addEventListener('mouseup', e => this.onUp(e));
+                this.canvas.addEventListener('contextmenu', e => { e.preventDefault(); this.demolish(); });
+
+                this.renderBldList();
                 this.loop();
-                this.log("Colony management systems operational.");
+                requestAnimationFrame(t => this.draw(t));
             },
 
-            switchScene(scene) {
-                this.state.activeScene = scene;
-                const map = document.getElementById('view-map');
-                const battle = document.getElementById('view-battle');
-                
-                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-                document.getElementById(`tab-${scene}`).classList.add('active');
-
-                if (scene === 'battle') {
-                    map.classList.add('hidden');
-                    battle.classList.remove('hidden');
-                } else {
-                    map.classList.remove('hidden');
-                    battle.classList.add('hidden');
-                    this.renderBuildingList();
-                    this.renderGrid();
-                }
-                this.updateUI();
+            resize() {
+                const rect = this.canvas.parentElement.getBoundingClientRect();
+                this.canvas.width = rect.width;
+                this.canvas.height = rect.height;
             },
 
-            renderBuildingList() {
-                const side = this.state.activeScene;
-                if (side === 'battle') return;
-                const listEl = document.getElementById('ui-building-list');
-                const cfg = this.config[side];
-                
-                listEl.innerHTML = Object.entries(cfg).map(([key, b]) => {
-                    const sel = this.state[side].selected === key;
-                    const costStr = Object.entries(b.cost).map(([r, v]) => `${v}${r==='wood'?'🪵':r==='stone'?'🪨':r==='bone'?'💀':'🌀'}`).join(' ');
-                    return `
-                        <div onclick="Game.selectBuilding('${key}')" class="bld-card p-4 rounded-2xl cursor-pointer ${sel?'selected':''}">
-                            <div class="flex items-center gap-3">
-                                <div class="text-2xl">${b.icon}</div>
-                                <div class="flex-1">
-                                    <div class="stat-font text-[10px] text-white font-bold">${b.name}</div>
-                                    <div class="mono text-[8px] text-slate-500">Cost: ${costStr}</div>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                }).join('');
+            switchScene(s) {
+                this.state.scene = s;
+                document.querySelectorAll('nav .tab-btn').forEach(b => b.classList.remove('active'));
+                document.getElementById(`scene-${s}`).classList.add('active');
+                document.getElementById('battle-view').classList.toggle('hidden', s !== 'battle');
+                document.getElementById('supply-ui').classList.toggle('hidden', s === 'battle');
+                this.renderBldList();
             },
 
-            selectBuilding(key) {
-                const side = this.state.activeScene;
-                this.state[side].selected = (this.state[side].selected === key) ? null : key;
-                this.renderBuildingList();
-                this.renderGrid();
+            switchTab(t) {
+                this.state.tab = t;
+                document.querySelectorAll('#sidebar .tab-btn').forEach(b => b.classList.remove('active'));
+                document.getElementById(`tab-${t}`).classList.add('active');
+                this.renderBldList();
             },
 
-            renderGrid() {
-                const side = this.state.activeScene;
-                if (side === 'battle') return;
-                const gridEl = document.getElementById('ui-map-grid');
-                gridEl.innerHTML = '';
-                
-                const s = this.state[side];
-                const cfg = this.config[side];
-
-                s.grid.forEach((item, i) => {
-                    const cell = document.createElement('div');
-                    const isFertile = s.fertility.includes(i);
-                    cell.className = `anno-cell ${isFertile?'fertile':''}`;
-                    
-                    if (item) {
-                        cell.innerText = cfg[item].icon;
-                        cell.classList.add('building-pop');
-                    } else if (s.selected) {
-                        cell.classList.add('preview');
-                        cell.setAttribute('data-icon', cfg[s.selected].icon);
-                    }
-
-                    cell.onclick = () => this.placeBuilding(i);
-                    cell.oncontextmenu = (e) => { e.preventDefault(); this.demolish(i); };
-                    gridEl.appendChild(cell);
+            renderBldList() {
+                const s = this.state.scene; if (s === 'battle') return;
+                const el = document.getElementById('bld-list'); el.innerHTML = '';
+                Object.entries(this.config[s]).forEach(([k, b]) => {
+                    if (b.cat !== this.state.tab) return;
+                    const card = document.createElement('div');
+                    card.className = `bld-card p-4 rounded-xl flex items-center gap-4 ${this.state[s].selected === k ? 'selected' : ''}`;
+                    card.innerHTML = `<div class="text-2xl">${b.icon}</div><div><div class="stat-font text-[10px] text-white font-bold">${b.name}</div><div class="mono text-[8px] text-slate-500">${b.size[0]}x${b.size[1]} • Cost: ${Object.values(b.cost)[0]}${Object.keys(b.cost)[0][0]}</div></div>`;
+                    card.onclick = () => { this.state[s].selected = this.state[s].selected === k ? null : k; this.renderBldList(); };
+                    el.appendChild(card);
                 });
             },
 
-            placeBuilding(idx) {
-                const side = this.state.activeScene;
-                const s = this.state[side];
-                const type = s.selected;
-                if (!type) return;
-                if (s.grid[idx]) return;
+            onDown(e) {
+                const rect = this.canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left, y = e.clientY - rect.top;
+                if (e.button === 0) {
+                    if (this.state[this.state.scene]?.selected) {
+                        this.place();
+                    } else {
+                        const cam = this.state[this.state.scene].camera;
+                        this.state.drag = { x: e.clientX, y: e.clientY, camX: cam.x, camY: cam.y };
+                    }
+                }
+            },
 
-                const cost = this.config[side][type].cost;
-                for (let r in cost) {
-                    if (s[r] < cost[r]) return alert("Insufficient resources!");
+            onMove(e) {
+                const rect = this.canvas.getBoundingClientRect();
+                this.state.mouse.x = e.clientX - rect.left;
+                this.state.mouse.y = e.clientY - rect.top;
+                if (this.state.drag) {
+                    const cam = this.state[this.state.scene].camera;
+                    cam.x = this.state.drag.camX - (e.clientX - this.state.drag.x);
+                    cam.y = this.state.drag.camY - (e.clientY - this.state.drag.y);
+                    const max = MAP_SZ * TILE;
+                    cam.x = Math.max(0, Math.min(max - this.canvas.width, cam.x));
+                    cam.y = Math.max(0, Math.min(max - this.canvas.height, cam.y));
+                }
+                const cam = this.state[this.state.scene]?.camera;
+                if (cam) {
+                    this.state.mouse.gx = Math.floor((this.state.mouse.x + cam.x) / TILE);
+                    this.state.mouse.gy = Math.floor((this.state.mouse.y + cam.y) / TILE);
+                }
+            },
+
+            onUp() { this.state.drag = null; },
+
+            place() {
+                const s = this.state.scene; const cur = this.state[s];
+                const type = cur.selected; const b = this.config[s][type];
+                const gx = this.state.mouse.gx, gy = this.state.mouse.gy;
+                
+                // Collision
+                for(let p of cur.placed) {
+                    const pb = this.config[s][p.type];
+                    if (!(gx + b.size[0] <= p.gx || gx >= p.gx + pb.size[0] || gy + b.size[1] <= p.gy || gy >= p.gy + pb.size[1])) return;
+                }
+                
+                // Cost
+                for(let r in b.cost) if (cur[r] < b.cost[r]) return;
+                for(let r in b.cost) cur[r] -= b.cost[r];
+                
+                cur.placed.push({ type, gx, gy });
+                this.log(`Constructed ${b.name} at [${gx}, ${gy}]`);
+                this.updateUI();
+            },
+
+            demolish() {
+                const s = this.state.scene; const cur = this.state[s];
+                const gx = this.state.mouse.gx, gy = this.state.mouse.gy;
+                const idx = cur.placed.findIndex(p => {
+                    const pb = this.config[s][p.type];
+                    return gx >= p.gx && gx < p.gx + pb.size[0] && gy >= p.gy && gy < p.gy + pb.size[1];
+                });
+                if (idx !== -1) { cur.placed.splice(idx, 1); this.log("Demolished sector."); this.updateUI(); }
+            },
+
+            dispatch() {
+                this.log("Dispatching supply convoy...");
+                setTimeout(() => {
+                    const s = this.state.scene;
+                    if (s === 'human') this.state.battle.hForce += 100;
+                    else this.state.battle.dForce += 100;
+                    this.log("Supplies arrived.");
+                }, 2000);
+            },
+
+            draw() {
+                const s = this.state.scene; if (s === 'battle') { requestAnimationFrame(t => this.draw(t)); return; }
+                const ctx = this.ctx; const cur = this.state[s]; const cam = cur.camera;
+                ctx.clearRect(0,0,this.canvas.width, this.canvas.height);
+                
+                // Terrain
+                for(let y=0; y<MAP_SZ; y++) {
+                    for(let x=0; x<MAP_SZ; x++) {
+                        const sx = x*TILE - cam.x, sy = y*TILE - cam.y;
+                        if (sx < -TILE || sy < -TILE || sx > this.canvas.width || sy > this.canvas.height) continue;
+                        const edge = x < 2 || y < 2 || x > MAP_SZ-3 || y > MAP_SZ-3;
+                        ctx.fillStyle = edge ? '#2a4e6e' : ((x+y)%2 ? '#4a6e2a' : '#3e6224');
+                        ctx.fillRect(sx, sy, TILE, TILE);
+                        ctx.strokeStyle = 'rgba(0,0,0,0.05)'; ctx.strokeRect(sx, sy, TILE, TILE);
+                    }
                 }
 
-                for (let r in cost) s[r] -= cost[r];
-                s.grid[idx] = type;
-                s.buildings[type]++;
-                this.log(`Construction complete: ${type} at Sector ${idx}.`);
-                this.renderGrid();
-                this.updateUI();
+                // Buildings
+                cur.placed.forEach(p => {
+                    const b = this.config[s][p.type];
+                    const sx = p.gx*TILE - cam.x, sy = p.gy*TILE - cam.y;
+                    ctx.fillStyle = s === 'human' ? '#8a7a5a' : '#4a1a1a';
+                    ctx.fillRect(sx+2, sy+2, b.size[0]*TILE-4, b.size[1]*TILE-4);
+                    ctx.fillStyle = 'white'; ctx.font = '20px serif'; ctx.textAlign = 'center';
+                    ctx.fillText(b.icon, sx + (b.size[0]*TILE)/2, sy + (b.size[1]*TILE)/2 + 7);
+                });
+
+                // Preview
+                if (cur.selected) {
+                    const b = this.config[s][cur.selected];
+                    ctx.globalAlpha = 0.4; ctx.fillStyle = 'white';
+                    ctx.fillRect(this.state.mouse.gx*TILE - cam.x, this.state.mouse.gy*TILE - cam.y, b.size[0]*TILE, b.size[1]*TILE);
+                    ctx.globalAlpha = 1;
+                }
+
+                requestAnimationFrame(t => this.draw(t));
             },
 
-            demolish(idx) {
-                const side = this.state.activeScene;
-                const type = this.state[side].grid[idx];
-                if (!type) return;
-                this.state[side].grid[idx] = null;
-                this.state[side].buildings[type]--;
-                this.log(`Demolished ${type} at Sector ${idx}. Resources recycled.`);
-                this.renderGrid();
-                this.updateUI();
-            },
-
-            updateSliders() {
-                const t = document.getElementById('input-true').value;
-                const f = document.getElementById('input-funny').value;
-                document.getElementById('ui-val-true').innerText = `${t}%`;
-                document.getElementById('ui-val-funny').innerText = `${f}%`;
-            },
-
-            executeSupply() {
-                if (this.state.battle.isGameOver) return;
-                const target = this.state.activeScene;
-                const t = document.getElementById('input-true').value / 100;
-                const f = document.getElementById('input-funny').value / 100;
-                const fake = Math.max(0, 1 - t - f);
-
-                this.log(`Convoy dispatched to ${target} front. ETA: 3s.`);
-                setTimeout(() => {
-                    if (this.state.battle.isGameOver) return;
-                    const sideKey = target === 'human' ? 'hForce' : 'dForce';
-                    this.state.battle[sideKey] += (t * 150) + (fake * 200);
-                    
-                    setTimeout(() => {
-                        this.state.battle[sideKey] -= (fake * 250);
-                        if (fake > 0.2) this.log(`Supply Alert: Fake goods detected in ${target} camp! Morale collapsing.`);
-                        this.updateUI();
-                    }, 5000);
-
-                    const saved = Math.floor(f * 40);
-                    if (saved > 0) {
-                        this.state[target].pop += saved;
-                        this.state[target].tiers[target === 'human' ? 'peasant' : 'slave'] += saved;
-                        this.state.battle.peaceScore += saved * 10;
-                        this.log(`Miracle: ${saved} deserters joined the ${target} colony.`);
-                    }
-                    this.updateUI();
-                }, 3000);
+            log(m) {
+                const l = document.getElementById('ui-log');
+                const p = document.createElement('p'); p.innerHTML = `> ${m}`;
+                l.prepend(p);
             },
 
             updateUI() {
-                const side = this.state.activeScene;
-                const b = this.state.battle;
+                const h = this.state.human, d = this.state.demon, b = this.state.battle;
+                document.getElementById('ui-res-food').innerText = Math.floor(h.food);
+                document.getElementById('ui-res-wood').innerText = Math.floor(h.wood);
+                document.getElementById('ui-res-stone').innerText = Math.floor(h.stone);
+                document.getElementById('ui-res-meat').innerText = Math.floor(d.meat);
+                document.getElementById('ui-res-bone').innerText = Math.floor(d.bone);
+                document.getElementById('ui-pop-val').innerText = `${h.pop + d.pop} / 2000`;
+                document.getElementById('ui-peace').innerText = b.peace;
                 
-                // Top bar
-                document.getElementById('ui-res-food').innerText = Math.floor(this.state.human.food);
-                document.getElementById('ui-res-wood').innerText = Math.floor(this.state.human.wood);
-                document.getElementById('ui-res-stone').innerText = Math.floor(this.state.human.stone);
-                document.getElementById('ui-res-meat').innerText = Math.floor(this.state.demon.meat);
-                document.getElementById('ui-res-bone').innerText = Math.floor(this.state.demon.bone);
-                document.getElementById('ui-res-mana').innerText = Math.floor(this.state.demon.mana);
-                document.getElementById('ui-peace-score').innerText = b.peaceScore;
-
-                // Sidebar
-                if (side !== 'battle') {
-                    const s = this.state[side];
-                    document.getElementById('ui-pop-count').innerText = `${s.pop} / ${s.pop * 2}`;
-                    document.getElementById('ui-pop-fill').style.width = '40%';
-                    document.getElementById('ui-pop-tiers').innerHTML = side === 'human' 
-                        ? `<div>PEASANTS: ${s.tiers.peasant}</div><div>CITIZENS: ${s.tiers.citizen}</div>`
-                        : `<div>SLAVES: ${s.tiers.slave}</div><div>LORDS: ${s.tiers.lord}</div>`;
-                    
-                    document.getElementById('ui-force-display').innerText = `FORCE: ${Math.floor(b[side==='human'?'hForce':'dForce'])}`;
-                }
-
-                // Battle
                 const total = b.hForce + b.dForce;
                 const balance = (b.hForce / total) * 100;
-                document.getElementById('ui-balance-bar').style.width = `${balance}%`;
-                document.getElementById('unit-human').style.left = `${balance * 0.7}%`;
-                document.getElementById('unit-demon').style.right = `${(100 - balance) * 0.7}%`;
-            },
-
-            log(msg) {
-                const el = document.getElementById('ui-log');
-                if (!el) return;
-                const p = document.createElement('p');
-                p.innerHTML = `<span class="text-white/20">[${new Date().toLocaleTimeString()}]</span> ${msg}`;
-                el.prepend(p);
+                document.getElementById('ui-balance').style.width = `${balance}%`;
+                document.getElementById('unit-h').style.left = `${balance * 0.7}%`;
+                document.getElementById('unit-d').style.right = `${(100 - balance) * 0.7}%`;
+                
+                const side = this.state.scene === 'human' ? 'hForce' : 'dForce';
+                document.getElementById('ui-force-side').innerText = this.state.scene === 'human' ? "Alliance Force" : "Legion Force";
+                document.getElementById('ui-force-val').innerText = Math.floor(b[side]);
             },
 
             loop() {
                 setInterval(() => {
-                    if (this.state.battle.isGameOver) return;
                     const h = this.state.human, d = this.state.demon, b = this.state.battle;
-
-                    // Anno-style Consumption & Growth
-                    h.food -= h.pop * 0.08;
-                    if (h.buildings.farm >= 2 && h.food > 300 && h.tiers.peasant > 0) { h.tiers.peasant--; h.tiers.citizen++; }
-                    if (h.food < 0) { h.food = 0; if (h.pop > 10) h.pop--; }
-                    
-                    const hMult = 1 + (h.tiers.peasant + h.tiers.citizen*3)/500;
-                    h.food += (h.pop * 0.1 + h.buildings.farm * 4) * hMult;
-                    h.wood += (h.pop * 0.05 + h.buildings.sawmill * 3) * hMult;
-                    h.stone += (h.pop * 0.02 + h.buildings.quarry * 2) * hMult;
-
-                    d.meat -= d.pop * 0.1;
-                    if (d.buildings.altar >= 2 && d.bone > 300 && d.tiers.slave > 0) { d.tiers.slave--; d.tiers.lord++; }
-                    
-                    const dMult = 1 + (d.tiers.slave + d.tiers.lord*4)/500;
-                    d.meat += (d.pop * 0.1 + d.buildings.pit * 4) * dMult;
-                    d.bone += (d.pop * 0.05 + d.buildings.rift * 3) * dMult;
-                    d.mana += (d.pop * 0.02 + d.buildings.altar * 2) * dMult;
-
-                    // World Drift
-                    b.hForce += (Math.random() * 8 - 4);
-                    b.dForce += (Math.random() * 8 - 4);
-
+                    // Production
+                    h.placed.forEach(p => h[this.config.human[p.type].prod.out] += this.config.human[p.type].prod.val);
+                    d.placed.forEach(p => d[this.config.demon[p.type].prod.out] += this.config.demon[p.type].prod.val);
+                    // Drift
+                    b.hForce += (Math.random()*4 - 2); b.dForce += (Math.random()*4 - 2);
                     this.updateUI();
                 }, 1000);
             }
