@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>City Ledger - Anno Style</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=IM+Fell+English:ital@0;1&family=MedievalSharp&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --parchment: #f4e4bc;
+            --parchment-dark: #d2b48c;
+            --gold: #d4af37;
+            --gold-bright: #ffd700;
+            --ink-black: #2c241a;
+            --income-green: #2d5a27;
+            --expense-red: #8b0000;
+            --border-style: 4px double #8b5a2b;
+        }
+
+        body {
+            background-color: #1a1a1a;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            font-family: 'IM Fell English', serif;
+            color: var(--ink-black);
+        }
+
+        /* The Ledger Container */
+        .ledger-container {
+            width: 600px;
+            background: var(--parchment);
+            background-image: 
+                radial-gradient(circle at 50% 50%, rgba(255,255,255,0.2) 0%, transparent 100%),
+                url('https://www.transparenttextures.com/patterns/parchment.png');
+            padding: 40px;
+            border: 15px solid #3d2b1f;
+            border-image: linear-gradient(to bottom, #5d4037, #3d2b1f) 1;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8), inset 0 0 100px rgba(139, 90, 43, 0.3);
+            position: relative;
+            transform: rotate(-0.5deg);
+        }
+
+        /* Decorative Corners */
+        .ledger-container::before, .ledger-container::after {
+            content: "⚜";
+            position: absolute;
+            font-size: 2rem;
+            color: var(--gold);
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+        .ledger-container::before { top: 10px; left: 10px; }
+        .ledger-container::after { bottom: 10px; right: 10px; }
+
+        /* Header */
+        header {
+            text-align: center;
+            border-bottom: var(--border-style);
+            margin-bottom: 30px;
+            padding-bottom: 10px;
+        }
+
+        h1 {
+            font-family: 'Cinzel', serif;
+            font-size: 2.5rem;
+            margin: 0;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            color: #4a3728;
+            text-shadow: 1px 1px 0px var(--gold);
+        }
+
+        .subtitle {
+            font-style: italic;
+            font-size: 1.1rem;
+            opacity: 0.8;
+        }
+
+        /* Balance Table */
+        .ledger-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .section-header {
+            font-family: 'MedievalSharp', cursive;
+            font-size: 1.4rem;
+            border-bottom: 2px solid rgba(139, 90, 43, 0.4);
+            padding: 15px 0 5px 0;
+            color: #5d4037;
+        }
+
+        .row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 5px;
+            border-bottom: 1px dashed rgba(0,0,0,0.1);
+            align-items: center;
+        }
+
+        .label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .icon {
+            width: 24px;
+            height: 24px;
+            background: #8b5a2b;
+            border-radius: 50%;
+            display: inline-block;
+            border: 1px solid var(--gold);
+        }
+
+        .value {
+            font-family: 'Cinzel', serif;
+            font-weight: bold;
+        }
+
+        .positive { color: var(--income-green); }
+        .negative { color: var(--expense-red); }
+
+        /* Totals Area */
+        .summary-box {
+            margin-top: 30px;
+            padding: 20px;
+            background: rgba(0,0,0,0.03);
+            border: 2px solid var(--gold);
+            position: relative;
+        }
+
+        .grand-total {
+            display: flex;
+            justify-content: space-between;
+            font-size: 1.8rem;
+            font-family: 'Cinzel', serif;
+            border-top: 3px double var(--ink-black);
+            margin-top: 10px;
+            padding-top: 10px;
+        }
+
+        .coin-icon {
+            color: var(--gold-bright);
+            text-shadow: 1px 1px 1px #000;
+            margin-left: 5px;
+        }
+
+        /* Decorative flourishes */
+        .flourish {
+            text-align: center;
+            font-size: 1.5rem;
+            color: var(--gold);
+            margin: 10px 0;
+        }
+
+        .stamp {
+            position: absolute;
+            bottom: 60px;
+            left: 40px;
+            width: 100px;
+            height: 100px;
+            border: 4px solid rgba(139, 0, 0, 0.6);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: rgba(139, 0, 0, 0.6);
+            font-family: 'Cinzel';
+            font-weight: bold;
+            transform: rotate(-20deg);
+            text-transform: uppercase;
+            pointer-events: none;
+            user-select: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="ledger-container">
+        <div class="stamp">Approved</div>
+        
+        <header>
+            <h1>City Ledger</h1>
+            <div class="subtitle">Imperial Year 1800 - Quarter IV</div>
+        </header>
+
+        <div class="section-header">Royal Revenue</div>
+        
+        <div class="row">
+            <span class="label">Farmers' Tithe</span>
+            <span class="value positive">+ 1,240 <span class="coin-icon">●</span></span>
+        </div>
+        <div class="row">
+            <span class="label">Workers' Payroll Tax</span>
+            <span class="value positive">+ 3,850 <span class="coin-icon">●</span></span>
+        </div>
+        <div class="row">
+            <span class="label">Artisans' Luxury Tax</span>
+            <span class="value positive">+ 2,100 <span class="coin-icon">●</span></span>
+        </div>
+        <div class="row">
+            <span class="label">Harbor Customs Duties</span>
+            <span class="value positive">+ 850 <span class="coin-icon">●</span></span>
+        </div>
+
+        <div class="section-header">Operational Maintenance</div>
+        
+        <div class="row">
+            <span class="label">Public Services (Fire & Police)</span>
+            <span class="value negative">- 1,200 <span class="coin-icon">●</span></span>
+        </div>
+        <div class="row">
+            <span class="label">Industrial Upkeep</span>
+            <span class="value negative">- 2,450 <span class="coin-icon">●</span></span>
+        </div>
+        <div class="row">
+            <span class="label">Royal Navy Contribution</span>
+            <span class="value negative">- 1,500 <span class="coin-icon">●</span></span>
+        </div>
+        <div class="row">
+            <span class="label">Infrastructure Repair</span>
+            <span class="value negative">- 640 <span class="coin-icon">●</span></span>
+        </div>
+
+        <div class="flourish">❦ ❦ ❦</div>
+
+        <div class="summary-box">
+            <div class="row" style="border:none">
+                <span>Total Income:</span>
+                <span class="value positive">+ 8,040</span>
+            </div>
+            <div class="row" style="border:none">
+                <span>Total Expenses:</span>
+                <span class="value negative">- 5,790</span>
+            </div>
+            <div class="grand-total">
+                <span>Net Balance</span>
+                <span class="value positive">+ 2,250 <span class="coin-icon">●</span></span>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
