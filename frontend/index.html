@@ -36,7 +36,7 @@
             background: var(--vignette); pointer-events: none;
         }
         
-        #game-container { display: flex; width: 100vw; height: 100vh; background: rgba(10, 8, 6, 0.75); backdrop-filter: blur(4px); }
+        #game-container { display: flex; width: 100vw; height: 100vh; background: var(--bg-panel); backdrop-filter: blur(4px); }
         #sidebar { 
             width: 340px; background: rgba(28, 24, 20, 0.98); 
             border-right: 3px solid transparent; border-image: linear-gradient(to bottom, var(--gold), var(--border), var(--gold)) 1;
@@ -176,6 +176,8 @@
             animation: notif-slide 0.5s forwards;
         }
         @keyframes notif-slide { to { transform: translateX(0); } }
+    </style>
+</head>
 <body>
     <div class="bg-layer"></div>
     <div class="bg-overlay"></div>
@@ -230,14 +232,13 @@
                 </div>
                 <div id="res-bar" class="flex gap-12 items-center mono text-[13px] text-gold/80 font-bold bg-black/40 px-6 py-2 rounded-full border border-gold/10"></div>
                 <div class="text-right z-50">
-            <div class="text-right z-50">
-                <span class="text-[9px] text-slate-400 uppercase font-bold block tracking-widest bg-black/40 px-2 py-1 rounded">和平指数 (Peace Index)</span>
-                <span id="ui-peace" class="text-gold font-black stat-font text-3xl drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">0</span>
-            </div>
+                    <span class="text-[9px] text-slate-400 uppercase font-bold block tracking-widest bg-black/40 px-2 py-1 rounded">和平指数 (Peace Index)</span>
+                    <span id="ui-peace" class="text-gold font-black stat-font text-3xl drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">0</span>
+                </div>
             </div>
 
-            <div id="viewport" class="flex-1 relative bg-black">
-                <canvas id="gameCanvas"></canvas>
+            <div id="viewport" class="flex-1 relative bg-black overflow-hidden">
+                <canvas id="gameCanvas" class="w-full h-full block"></canvas>
                 
                 <!-- Logistic Fleet (New Interaction) -->
                 <div id="convoy-fleet">
