@@ -165,8 +165,11 @@
                 </section>
             </div>
 
-            <div class="mt-auto p-6 bg-black/40 border-t border-white/10">
-                <button onclick="Game.switchScene('battle')" class="w-full py-4 bg-gold hover:bg-gold-bright text-black stat-font text-[10px] font-black tracking-[3px] transition-all">前线战报视察</button>
+            <div class="mt-auto p-6 bg-black/60 border-t-2 border-gold/20">
+                <button onclick="Game.switchScene('battle')" class="group relative w-full overflow-hidden py-5 bg-gold hover:bg-gold-bright transition-all duration-300">
+                    <div class="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
+                    <span class="relative z-10 text-black font-black uppercase text-[12px] tracking-[6px] stat-font">前线战报视察 (Warfront)</span>
+                </button>
             </div>
         </div>
 
@@ -177,10 +180,10 @@
                     <button onclick="Game.switchScene('demon')" id="scene-demon" class="stat-font text-[11px] tracking-[2px] font-bold text-slate-500">深渊新世界</button>
                 </div>
                 <div id="res-bar" class="flex gap-8 items-center mono text-[12px]"></div>
-                <div class="text-right">
-                    <span class="text-[9px] text-slate-500 uppercase font-bold block tracking-widest">和平指数</span>
-                    <span id="ui-peace" class="text-gold font-black stat-font text-2xl">0</span>
-                </div>
+            <div class="text-right z-50">
+                <span class="text-[9px] text-slate-400 uppercase font-bold block tracking-widest bg-black/40 px-2 py-1 rounded">和平指数 (Peace Index)</span>
+                <span id="ui-peace" class="text-gold font-black stat-font text-3xl drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">0</span>
+            </div>
             </div>
 
             <div id="viewport" class="flex-1 relative bg-black">
