@@ -145,10 +145,37 @@
         .status-positive { color: #6a9e4a; font-weight: bold; }
         .status-negative { color: #c45c4a; font-weight: bold; }
 
-        .tab-btn { font-family: 'Cinzel'; font-size: 10px; letter-spacing: 2px; color: #8a7e6a; border-bottom: 2px solid transparent; transition: 0.2s; }
-        .tab-btn.active { color: var(--gold); border-bottom-color: var(--gold); }
-    </style>
-</head>
+        /* Contextual HUD Visibility & Diegetic Elements */
+        .hud-element { transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .hud-hidden { opacity: 0; transform: translateY(20px); pointer-events: none; }
+        
+        /* Population Tiers - Progressive Disclosure Styling */
+        .tier-card {
+            background: linear-gradient(135deg, rgba(42,36,30,0.9) 0%, rgba(28,24,20,0.95) 100%);
+            border: 1px solid var(--border); padding: 12px; border-radius: 4px;
+            transition: all 0.3s; cursor: help; position: relative;
+        }
+        .tier-card:hover { border-color: var(--gold); transform: scale(1.02); background: rgba(42,36,30,1); }
+        .tier-details { 
+            display: none; font-size: 9px; color: #8a7e6a; margin-top: 8px; 
+            padding-top: 8px; border-top: 1px style dashed var(--border);
+        }
+        .tier-card:hover .tier-details { display: block; animation: fade-in 0.3s forwards; }
+
+        @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+
+        /* Notification Queue */
+        #notif-container {
+            position: absolute; top: 100px; right: 24px; width: 300px;
+            display: flex; flex-direction: column; gap: 10px; z-index: 100;
+        }
+        .notif-item {
+            background: rgba(28,24,20,0.95); border-left: 3px solid var(--gold);
+            padding: 12px 16px; font-family: 'Cinzel'; font-size: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5); transform: translateX(120%);
+            animation: notif-slide 0.5s forwards;
+        }
+        @keyframes notif-slide { to { transform: translateX(0); } }
 <body>
     <div class="bg-layer"></div>
     <div class="bg-overlay"></div>
@@ -392,20 +419,31 @@
                 
                 activeShips.forEach(ship => {
                     ship.status = 'DISPATCHING';
-                    this.log(`Fleet [${ship.name}] is departing for the frontlines.`);
+                    this.notify(`舰队 [${ship.name}] 已离港，满载战略物资！`);
                     setTimeout(() => {
                         const key = this.state.scene === 'human' ? 'hForce' : 'dForce';
                         this.state.battle[key] += ship.load;
                         ship.load = 0;
                         ship.status = 'RETURNING';
+                        this.notify(`舰队 [${ship.name}] 成功抵达前线，天平发生偏移！`);
                         this.updateUI();
                         setTimeout(() => {
                             ship.status = 'IDLE';
+                            this.notify(`舰队 [${ship.name}] 已安全返航。`);
                             this.updateUI();
                         }, 5000);
                     }, 3000);
                 });
                 this.updateUI();
+            },
+            notify(msg) {
+                const container = document.getElementById('notif-container');
+                if (!container) return;
+                const item = document.createElement('div');
+                item.className = 'notif-item';
+                item.innerText = msg;
+                container.appendChild(item);
+                setTimeout(() => item.remove(), 4000);
             },
             draw() {
                 const s = this.state.scene; if (s === 'battle') { requestAnimationFrame(t => this.draw(t)); return; }
@@ -473,11 +511,22 @@
                 // Happiness Meters
                 const tiersEl = document.getElementById('ui-pop-tiers');
                 if (tiersEl) {
-                    tiersEl.innerHTML = s === 'human' ? 
-                        `<div><div class="flex justify-between text-[10px] tracking-widest"><span>PEASANTS</span><span>${Math.floor(h.tiers.peasant)}</span></div><div class="happiness-meter"><div class="happiness-fill" style="width: 85%"></div></div></div>
-                         <div><div class="flex justify-between text-[10px] tracking-widest"><span>CITIZENS</span><span>${Math.floor(h.tiers.citizen)}</span></div><div class="happiness-meter"><div class="happiness-fill" style="width: 60%"></div></div></div>` :
-                        `<div><div class="flex justify-between text-[10px] tracking-widest"><span>SLAVES</span><span>${Math.floor(d.tiers.slave)}</span></div><div class="happiness-meter"><div class="happiness-fill" style="width: 40%"></div></div></div>
-                         <div><div class="flex justify-between text-[10px] tracking-widest"><span>LORDS</span><span>${Math.floor(d.tiers.lord)}</span></div><div class="happiness-meter"><div class="happiness-fill" style="width: 90%"></div></div></div>`;
+                    const t = s === 'human' ? 
+                        [{id:'PEASANTS', v:h.tiers.peasant, f:85, d:'提供基础劳动力，满足粮食需求可提升幸福。'}, {id:'CITIZENS', v:h.tiers.citizen, f:60, d:'精英阶层，提供更高税收，对文化有较高追求。'}] :
+                        [{id:'SLAVES', v:d.tiers.slave, f:40, d:'深渊的基础，需时刻监控其反抗情绪。'}, {id:'LORDS', v:d.tiers.lord, f:90, d:'恶魔统领，拥有强大的灵魂能量。'}];
+                    
+                    tiersEl.innerHTML = t.map(tier => `
+                        <div class="tier-card">
+                            <div class="flex justify-between text-[10px] tracking-widest font-bold">
+                                <span>${tier.id}</span>
+                                <span>${Math.floor(tier.v)}</span>
+                            </div>
+                            <div class="happiness-meter">
+                                <div class="happiness-fill" style="width: ${tier.f}%"></div>
+                            </div>
+                            <div class="tier-details">${tier.d}</div>
+                        </div>
+                    `).join('');
                 }
                 
                 // Fleet Rendering
