@@ -104,9 +104,21 @@
         #dispatch-confirm.show { opacity: 1; transform: translateX(-50%) translateY(0); pointer-events: auto; }
         #dispatch-confirm:hover { background: var(--gold-bright); transform: translateX(-50%) scale(1.1); }
         
-        canvas { display: block; width: 100%; height: 100%; background: #000; }
-
-        /* Happiness Meters from PraisonAI */
+        /* Battle View Refinement */
+        #battle-view { 
+            position: absolute; inset: 0; background: rgba(10, 8, 6, 0.98); 
+            display: flex; flex-direction: column; items: center; justify-content: center; z-index: 100;
+        }
+        #battle-view.hidden { display: none !important; }
+        
+        #ui-balance-outer {
+            width: 100%; max-width: 800px; height: 4px; background: rgba(255,255,255,0.05);
+            border-radius: 2px; overflow: hidden; position: relative;
+        }
+        #ui-balance {
+            height: 100%; background: linear-gradient(90deg, #c9a84c, #e8c84a);
+            box-shadow: 0 0 30px #c9a84c; transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+        }
         .happiness-meter { height: 3px; background: rgba(0,0,0,0.5); border-radius: 2px; margin-top: 6px; overflow: hidden; }
         .happiness-fill { height: 100%; background: #6a9e4a; transition: width 0.5s; }
         .status-positive { color: #6a9e4a; font-weight: bold; }
@@ -180,18 +192,36 @@
                 </div>
                 <button id="dispatch-confirm" onclick="Game.dispatchFleet()">授权商队启程</button>
 
-                <!-- Battle View -->
-                <div id="battle-view" class="hidden absolute inset-0 bg-[#0a0806]/95 flex flex-col items-center justify-center space-y-16">
-                    <div class="w-full max-w-3xl text-center space-y-6">
-                        <div class="stat-font text-xs tracking-[1em] text-gold/40 uppercase">万界天平核心</div>
-                        <div class="h-1 bg-white/5 rounded-full overflow-hidden"><div id="ui-balance" class="h-full bg-gold shadow-[0_0_20px_#c9a84c] transition-all duration-1000" style="width: 50%"></div></div>
+                <!-- Battle View (Centered Frontline) -->
+                <div id="battle-view" class="hidden">
+                    <div class="w-full max-w-4xl text-center space-y-12">
+                        <div class="space-y-4">
+                            <div class="stat-font text-[10px] tracking-[1.5em] text-gold/40 uppercase">万界天平 · 中央战场</div>
+                            <div id="ui-balance-outer">
+                                <div id="ui-balance" style="width: 50%"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center justify-between w-full px-12">
+                            <div class="text-center group">
+                                <div id="unit-h" class="text-8xl mb-4 transition-all duration-500 hover:scale-125">🛡️</div>
+                                <div class="stat-font text-gold/60 text-xs tracking-widest">联盟远征军</div>
+                            </div>
+                            
+                            <div class="stat-font text-white/5 text-[10rem] font-black italic select-none">VS</div>
+                            
+                            <div class="text-center group">
+                                <div id="unit-d" class="text-8xl mb-4 transition-all duration-500 hover:scale-125">🔥</div>
+                                <div class="stat-font text-red-900/60 text-xs tracking-widest">深渊入侵者</div>
+                            </div>
+                        </div>
+                        
+                        <div id="ui-log" class="w-full max-w-3xl h-48 bg-black/60 border border-gold/10 p-6 overflow-y-auto mono text-[10px] text-slate-500 scroll-smooth leading-loose text-left">
+                            <div class="text-gold/20 italic mb-4">--- 正在接入前线战略通信数据流 ---</div>
+                        </div>
+                        
+                        <button onclick="Game.switchScene('human')" class="stat-font text-[10px] text-gold/40 hover:text-gold tracking-[4px] uppercase border-b border-transparent hover:border-gold transition-all pb-1">返回行省建设</button>
                     </div>
-                    <div class="flex items-center justify-between w-full px-48">
-                        <div id="unit-h" class="text-7xl opacity-50 transition-all duration-1000 grayscale hover:grayscale-0">🛡️</div>
-                        <div class="stat-font text-white/5 text-[10rem] font-black italic">平衡</div>
-                        <div id="unit-d" class="text-7xl opacity-50 transition-all duration-1000 grayscale hover:grayscale-0">🔥</div>
-                    </div>
-                    <div id="ui-log" class="w-full max-w-2xl h-40 bg-black/40 p-6 overflow-y-auto mono text-[10px] text-slate-600 scroll-smooth leading-loose"></div>
                 </div>
             </div>
         </div>
@@ -239,8 +269,14 @@
                 }
                 document.querySelectorAll('#top-bar button').forEach(b => b.classList.replace('text-gold', 'text-slate-500'));
                 if (s !== 'battle') document.getElementById(`scene-${s}`).classList.replace('text-slate-500', 'text-gold');
+                
+                // FIXED: Toggle Battle View correctly
                 document.getElementById('battle-view').classList.toggle('hidden', s !== 'battle');
+                
+                // Logistic fleet should only show in building scenes, hide in battle view
                 document.getElementById('convoy-fleet').classList.toggle('hidden', s === 'battle');
+                document.getElementById('dispatch-confirm').classList.remove('show'); // Hide dispatch button on scene change
+                
                 this.renderBldGrid(); this.updateUI();
             },
             switchTab(t) {
@@ -397,16 +433,23 @@
                 const s = this.state.scene; const cur = this.state[s];
                 const h = this.state.human, d = this.state.demon, b = this.state.battle;
                 const resEl = document.getElementById('res-bar');
-                resEl.innerHTML = s === 'human' ? `<span>🌾 ${Math.floor(h.food)}</span><span>🪵 ${Math.floor(h.wood)}</span><span>🪨 ${Math.floor(h.stone)}</span>` : 
-                                                 `<span>🥩 ${Math.floor(d.meat)}</span><span>💀 ${Math.floor(d.bone)}</span><span>🌀 ${Math.floor(d.mana)}</span>`;
-                document.getElementById('ui-pop-count').innerText = Math.floor(h.pop + d.pop);
+                if (resEl) {
+                    resEl.innerHTML = s === 'human' ? `<span>🌾 ${Math.floor(h.food)}</span><span>🪵 ${Math.floor(h.wood)}</span><span>🪨 ${Math.floor(h.stone)}</span>` : 
+                                                     `<span>🥩 ${Math.floor(d.meat)}</span><span>💀 ${Math.floor(d.bone)}</span><span>🌀 ${Math.floor(d.mana)}</span>`;
+                }
+                
+                const popEl = document.getElementById('ui-pop-count');
+                if (popEl) popEl.innerText = Math.floor(h.pop + d.pop);
                 
                 // Happiness Meters
-                document.getElementById('ui-pop-tiers').innerHTML = s === 'human' ? 
-                    `<div><div class="flex justify-between text-[10px] tracking-widest"><span>PEASANTS</span><span>${Math.floor(h.tiers.peasant)}</span></div><div class="happiness-meter"><div class="happiness-fill" style="width: 85%"></div></div></div>
-                     <div><div class="flex justify-between text-[10px] tracking-widest"><span>CITIZENS</span><span>${Math.floor(h.tiers.citizen)}</span></div><div class="happiness-meter"><div class="happiness-fill" style="width: 60%"></div></div></div>` :
-                    `<div><div class="flex justify-between text-[10px] tracking-widest"><span>SLAVES</span><span>${Math.floor(d.tiers.slave)}</span></div><div class="happiness-meter"><div class="happiness-fill" style="width: 40%"></div></div></div>
-                     <div><div class="flex justify-between text-[10px] tracking-widest"><span>LORDS</span><span>${Math.floor(d.tiers.lord)}</span></div><div class="happiness-meter"><div class="happiness-fill" style="width: 90%"></div></div></div>`;
+                const tiersEl = document.getElementById('ui-pop-tiers');
+                if (tiersEl) {
+                    tiersEl.innerHTML = s === 'human' ? 
+                        `<div><div class="flex justify-between text-[10px] tracking-widest"><span>PEASANTS</span><span>${Math.floor(h.tiers.peasant)}</span></div><div class="happiness-meter"><div class="happiness-fill" style="width: 85%"></div></div></div>
+                         <div><div class="flex justify-between text-[10px] tracking-widest"><span>CITIZENS</span><span>${Math.floor(h.tiers.citizen)}</span></div><div class="happiness-meter"><div class="happiness-fill" style="width: 60%"></div></div></div>` :
+                        `<div><div class="flex justify-between text-[10px] tracking-widest"><span>SLAVES</span><span>${Math.floor(d.tiers.slave)}</span></div><div class="happiness-meter"><div class="happiness-fill" style="width: 40%"></div></div></div>
+                         <div><div class="flex justify-between text-[10px] tracking-widest"><span>LORDS</span><span>${Math.floor(d.tiers.lord)}</span></div><div class="happiness-meter"><div class="happiness-fill" style="width: 90%"></div></div></div>`;
+                }
                 
                 // Fleet Rendering
                 const fleetEl = document.getElementById('convoy-fleet');
@@ -424,11 +467,17 @@
                     `).join('');
                 }
 
-                const hasLoaded = this.state.fleet.some(f => f.load > 0 && f.status === 'IDLE');
-                document.getElementById('dispatch-confirm').classList.toggle('show', hasLoaded);
+                const dispatchBtn = document.getElementById('dispatch-confirm');
+                if (dispatchBtn) {
+                    const hasLoaded = this.state.fleet.some(f => f.load > 0 && f.status === 'IDLE');
+                    dispatchBtn.classList.toggle('show', hasLoaded);
+                }
 
-                document.getElementById('ui-peace').innerText = b.peace;
-                document.getElementById('ui-balance').style.width = (b.hForce / (b.hForce + b.dForce)) * 100 + '%';
+                const peaceEl = document.getElementById('ui-peace');
+                if (peaceEl) peaceEl.innerText = b.peace;
+                
+                const balanceEl = document.getElementById('ui-balance');
+                if (balanceEl) balanceEl.style.width = (b.hForce / (b.hForce + b.dForce)) * 100 + '%';
             },
             loop() {
                 setInterval(() => {
