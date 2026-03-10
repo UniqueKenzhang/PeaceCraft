@@ -60,6 +60,10 @@
         }
         .bld-item.selected { border-color: var(--gold-bright); box-shadow: 0 0 25px rgba(201,168,76,0.5); transform: scale(1.05); }
         
+        /* Custom range sliders */
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 0; }
+        input[type=range]::-moz-range-thumb { width: 0; }
+        
         canvas { display: block; width: 100%; height: 100%; background: #000; }
 
         /* Happiness Meters from PraisonAI */
@@ -130,25 +134,65 @@
             <div id="viewport" class="flex-1 relative bg-black">
                 <canvas id="gameCanvas"></canvas>
                 
-                <!-- Supply Overlay -->
-                <div id="supply-ui" class="absolute bottom-10 left-1/2 -translate-x-1/2 bg-[#1c1814]/95 border-2 border-gold/20 p-8 w-[600px] shadow-2xl backdrop-blur-md">
-                    <div class="flex justify-between mb-6 border-b border-white/5 pb-4">
-                        <span id="ui-force-side" class="stat-font text-xs text-gold uppercase tracking-[4px]">战略物资调拨</span>
+                <!-- Supply Overlay (Enhanced Anno Style) -->
+                <div id="supply-ui" class="absolute bottom-10 left-1/2 -translate-x-1/2 bg-[#1c1814]/98 border-t-2 border-b-2 border-gold/40 p-10 w-[680px] shadow-[0_20px_60px_rgba(0,0,0,0.9)] backdrop-blur-xl rounded-sm">
+                    <!-- Ornate Corner Decorations -->
+                    <div class="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-gold/60"></div>
+                    <div class="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-gold/60"></div>
+                    <div class="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-gold/60"></div>
+                    <div class="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-gold/60"></div>
+
+                    <div class="flex justify-between items-center mb-8 border-b border-gold/10 pb-6">
+                        <div>
+                            <span id="ui-force-side" class="stat-font text-[10px] text-gold/60 uppercase tracking-[6px] block mb-1">PeaceCraft Logistic Command</span>
+                            <h2 class="stat-font text-xl text-gold tracking-[4px] font-black uppercase italic">战略物资调拨枢纽</h2>
+                        </div>
                         <div class="text-right">
-                            <span id="ui-force-val" class="mono text-white text-3xl font-black italic">500</span>
+                            <span class="text-[9px] text-slate-500 uppercase tracking-widest block">储备总量</span>
+                            <span id="ui-force-val" class="mono text-white text-4xl font-black italic tracking-tighter">500</span>
                         </div>
                     </div>
-                    <div class="grid grid-cols-2 gap-12 mb-6">
-                        <div class="space-y-4">
-                            <div class="flex justify-between text-[10px] uppercase font-bold text-slate-400"><span>真钢兵刃</span><span id="v-true" class="text-white">50%</span></div>
-                            <input type="range" id="in-true" oninput="Game.upSlid()" class="w-full accent-gold">
+
+                    <div class="grid grid-cols-2 gap-16 mb-10">
+                        <div class="space-y-6">
+                            <div class="flex justify-between items-end">
+                                <div class="flex items-center gap-3">
+                                    <span class="text-2xl">⚔️</span>
+                                    <div>
+                                        <span class="text-[10px] uppercase font-bold text-slate-400 block tracking-widest">真钢兵刃</span>
+                                        <span class="text-[8px] text-gold/40 italic">True-Steel Armaments</span>
+                                    </div>
+                                </div>
+                                <span id="v-true" class="mono text-white font-bold text-lg">50%</span>
+                            </div>
+                            <div class="relative h-2 bg-black/60 rounded-full border border-white/5 overflow-hidden">
+                                <input type="range" id="in-true" oninput="Game.upSlid()" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20">
+                                <div id="bar-true" class="absolute inset-y-0 left-0 bg-gradient-to-r from-gold/40 to-gold shadow-[0_0_10px_var(--gold)] transition-all duration-300" style="width: 50%"></div>
+                            </div>
                         </div>
-                        <div class="space-y-4">
-                            <div class="flex justify-between text-[10px] uppercase font-bold text-slate-400"><span>滑稽搞怪</span><span id="v-funny" class="text-gold">50%</span></div>
-                            <input type="range" id="in-funny" oninput="Game.upSlid()" class="w-full accent-gold">
+
+                        <div class="space-y-6">
+                            <div class="flex justify-between items-end">
+                                <div class="flex items-center gap-3">
+                                    <span class="text-2xl">🎭</span>
+                                    <div>
+                                        <span class="text-[10px] uppercase font-bold text-slate-400 block tracking-widest">滑稽搞怪</span>
+                                        <span class="text-[8px] text-gold/40 italic">Whimsical Artifacts</span>
+                                    </div>
+                                </div>
+                                <span id="v-funny" class="mono text-gold font-bold text-lg">50%</span>
+                            </div>
+                            <div class="relative h-2 bg-black/60 rounded-full border border-white/5 overflow-hidden">
+                                <input type="range" id="in-funny" oninput="Game.upSlid()" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20">
+                                <div id="bar-funny" class="absolute inset-y-0 left-0 bg-gradient-to-r from-gold/40 to-gold shadow-[0_0_10px_var(--gold)] transition-all duration-300" style="width: 50%"></div>
+                            </div>
                         </div>
                     </div>
-                    <button onclick="Game.dispatch()" class="w-full py-4 bg-gold hover:bg-gold-bright text-black font-black uppercase text-[11px] tracking-[4px]">授权商队出发</button>
+
+                    <button onclick="Game.dispatch()" class="group relative w-full overflow-hidden py-5 bg-gold hover:bg-gold-bright transition-all duration-300">
+                        <div class="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
+                        <span class="relative z-10 text-black font-black uppercase text-[12px] tracking-[6px] stat-font">授权商队出发 (Authorize Convoy)</span>
+                    </button>
                 </div>
 
                 <!-- Battle View -->
@@ -282,8 +326,12 @@
                 }
             },
             upSlid() {
-                document.getElementById('v-true').innerText = document.getElementById('in-true').value + '%';
-                document.getElementById('v-funny').innerText = document.getElementById('in-funny').value + '%';
+                const vT = document.getElementById('in-true').value;
+                const vF = document.getElementById('in-funny').value;
+                document.getElementById('v-true').innerText = vT + '%';
+                document.getElementById('v-funny').innerText = vF + '%';
+                document.getElementById('bar-true').style.width = vT + '%';
+                document.getElementById('bar-funny').style.width = vF + '%';
             },
             dispatch() {
                 const s = this.state.scene; this.log(`Convoy dispatched to the front.`);
