@@ -11,12 +11,12 @@
             --bg-dark: #0a0806; --bg-panel: #1c1814; --bg-card: #2a241e;
             --gold: #c9a84c; --gold-bright: #e8c84a; --border: #3d3529;
         }
-        body { font-family: 'Crimson Pro', serif; background-color: var(--bg-dark); color: #d4c5a9; overflow: hidden; margin: 0; user-select: none; }
+        body { font-family: 'Crimson Pro', serif; background-color: var(--bg-dark); color: #d4c5a9; overflow: hidden; margin: 0; user-select: none; background-image: url('../assets/image4.png'); background-size: cover; background-position: center; background-blend-mode: overlay; }
         .stat-font { font-family: 'Cinzel', serif; }
         .mono { font-family: 'JetBrains Mono', monospace; }
         
-        #game-container { display: flex; width: 100vw; height: 100vh; }
-        #sidebar { width: 340px; background: var(--bg-panel); border-right: 2px solid var(--border); display: flex; flex-direction: column; z-index: 50; box-shadow: 10px 0 30px rgba(0,0,0,0.5); overflow-y: auto; }
+        #game-container { display: flex; width: 100vw; height: 100vh; background: rgba(10, 8, 6, 0.85); backdrop-filter: blur(8px); }
+        #sidebar { width: 340px; background: rgba(28, 24, 20, 0.95); border-right: 2px solid var(--border); display: flex; flex-direction: column; z-index: 50; box-shadow: 10px 0 30px rgba(0,0,0,0.5); overflow-y: auto; }
         
         #main-area { flex: 1; display: flex; flex-direction: column; position: relative; overflow: hidden; }
         #top-bar { height: 64px; background: linear-gradient(180deg, #231f1a 0%, #1a1612 100%); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 24px; z-index: 40; }
@@ -47,6 +47,9 @@
         <!-- ANNO SIDEBAR (PraisonAI Refined) -->
         <div id="sidebar">
             <div class="p-8 border-b border-white/5 text-center bg-black/20">
+                <div id="side-hero-img" class="w-full h-24 mb-4 rounded border border-gold/20 overflow-hidden">
+                    <img src="../assets/image1.png" class="w-full h-full object-cover opacity-60">
+                </div>
                 <h1 class="stat-font text-gold text-2xl tracking-[6px] font-black italic">帝国总署</h1>
                 <p class="text-[9px] text-slate-500 uppercase tracking-[3px] mt-1">PeaceCraft Imperial Command</p>
             </div>
@@ -163,6 +166,11 @@
             },
             switchScene(s) {
                 this.state.scene = s;
+                const heroImg = document.querySelector('#side-hero-img img');
+                if (heroImg) {
+                    heroImg.src = s === 'human' ? '../assets/image1.png' : 
+                                 s === 'demon' ? '../assets/image2.png' : '../assets/image4.png';
+                }
                 document.querySelectorAll('#top-bar button').forEach(b => b.classList.replace('text-gold', 'text-slate-500'));
                 if (s !== 'battle') document.getElementById(`scene-${s}`).classList.replace('text-slate-500', 'text-gold');
                 document.getElementById('battle-view').classList.toggle('hidden', s !== 'battle');
@@ -179,8 +187,16 @@
                 Object.entries(this.config[s]).forEach(([k, b]) => {
                     if (b.cat !== this.state.tab) return;
                     const item = document.createElement('div');
-                    item.className = `bld-item ${this.state[s].selected === k ? 'selected' : ''}`;
-                    item.innerHTML = `<span class="text-3xl">${b.icon}</span>`;
+                    item.className = `bld-item ${this.state[s].selected === k ? 'selected' : ''} relative overflow-hidden`;
+                    
+                    // Production Chain Visual integration
+                    const isProd = k === 'sawmill' || k === 'altar' || k === 'farm' || k === 'pit';
+                    const bgUrl = isProd ? '../assets/image3.png' : '';
+                    
+                    item.innerHTML = `
+                        ${bgUrl ? `<img src="${bgUrl}" class="absolute inset-0 w-full h-full object-cover opacity-20 grayscale">` : ''}
+                        <span class="text-3xl z-10">${b.icon}</span>
+                    `;
                     item.onclick = () => { this.state[s].selected = (this.state[s].selected === k) ? null : k; this.renderBldGrid(); };
                     el.appendChild(item);
                 });
