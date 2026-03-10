@@ -303,9 +303,22 @@
                         const sx = x*TILE - cam.x, sy = y*TILE - cam.y;
                         if (sx < -TILE || sy < -TILE || sx > this.canvas.width || sy > this.canvas.height) continue;
                         const water = x < 2 || y < 2 || x > MAP_SZ-3 || y > MAP_SZ-3;
-                        ctx.fillStyle = water ? '#08121a' : ((x+y)%2 ? '#1a1f14' : '#161a10');
+                        
+                        // Enhanced visibility for terrain
+                        if (water) {
+                            ctx.fillStyle = '#0a1a2a'; // Deep Navy Water
+                        } else {
+                            const isAlt = (x+y)%2;
+                            ctx.fillStyle = s === 'human' ? 
+                                (isAlt ? '#3a4a2e' : '#2e3d24') : // Lighter Lush Green for Human
+                                (isAlt ? '#4a2620' : '#3a1e1a');  // Deep Crimson/Earth for Demon
+                        }
+                        
                         ctx.fillRect(sx, sy, TILE, TILE);
-                        ctx.strokeStyle = 'rgba(201,168,76,0.03)'; ctx.strokeRect(sx, sy, TILE, TILE);
+                        
+                        // Grid lines for clarity
+                        ctx.strokeStyle = 'rgba(201,168,76,0.15)'; 
+                        ctx.strokeRect(sx, sy, TILE, TILE);
                     }
                 }
                 // Build
