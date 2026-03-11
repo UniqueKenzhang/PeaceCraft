@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PeaceCraft - Anno Elite v4.5 (PraisonAI Integrated)</title>
+    <title>PeaceCraft - Imperial Dominion v4.9 (High-Load Protocol)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Crimson+Pro:wght@300;400;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
@@ -12,6 +12,7 @@
             --gold: #c9a84c; --gold-bright: #e8c84a; --border: #3d3529;
             --vignette: radial-gradient(circle, rgba(0,0,0,0) 50%, rgba(0,0,0,0.8) 100%);
         }
+        .stat-font { font-family: 'Cinzel', serif; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
         @keyframes subtle-zoom {
             0% { transform: scale(1); }
             50% { transform: scale(1.05); }
@@ -75,6 +76,13 @@
             transform: translateY(-2px);
             z-index: 10;
         }
+        .bld-item.selected { 
+            border-color: var(--gold-bright) !important; 
+            box-shadow: 0 0 25px rgba(201,168,76,0.6); 
+            transform: scale(1.08); 
+            background: rgba(201,168,76,0.15) !important;
+            z-index: 20;
+        }
         /* Logistic Convoy Fleet (New Interaction) */
         #convoy-fleet {
             position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%);
@@ -116,11 +124,12 @@
         }
 
         #dispatch-confirm {
-            position: absolute; bottom: 240px; left: 50%; transform: translateX(-50%) translateY(20px);
+            position: absolute; bottom: 300px; left: 50%; transform: translateX(-50%) translateY(20px);
             opacity: 0; pointer-events: none; transition: all 0.3s;
             background: var(--gold); color: black; padding: 12px 40px;
             font-family: 'Cinzel'; font-weight: 900; letter-spacing: 4px; font-size: 12px;
             box-shadow: 0 0 30px rgba(201,168,76,0.4); cursor: pointer;
+            z-index: 80;
         }
         #dispatch-confirm.show { opacity: 1; transform: translateX(-50%) translateY(0); pointer-events: auto; }
         #dispatch-confirm:hover { background: var(--gold-bright); transform: translateX(-50%) scale(1.1); }
@@ -158,7 +167,7 @@
         .tier-card:hover { border-color: var(--gold); transform: scale(1.02); background: rgba(42,36,30,1); }
         .tier-details { 
             display: none; font-size: 9px; color: #8a7e6a; margin-top: 8px; 
-            padding-top: 8px; border-top: 1px style dashed var(--border);
+            padding-top: 8px; border-top: 1px dashed var(--border);
         }
         .tier-card:hover .tier-details { display: block; animation: fade-in 0.3s forwards; }
 
@@ -289,15 +298,26 @@
                 demon: { pop: 100, tiers: { slave: 100, lord: 0 }, meat: 500, bone: 200, mana: 100, placed: [], camera: { x: 1000, y: 1000 }, selected: null },
                 battle: { hForce: 500, dForce: 500, peace: 0 },
                 fleet: [
-                    { id: 1, name: '铁甲壹号', type: 'armament', icon: '⚔️', load: 0, max: 200, status: 'IDLE' },
-                    { id: 2, name: '游吟商船', type: 'funny', icon: '🎭', load: 0, max: 200, status: 'IDLE' },
-                    { id: 3, name: '皇家重载', type: 'mixed', icon: '📦', load: 0, max: 400, status: 'IDLE' }
+                    { id: 1, name: '铁甲壹号', type: 'armament', icon: '⚔️', load: 0, max: 200, status: 'IDLE', speed: 1.5 },
+                    { id: 2, name: '游吟商船', type: 'funny', icon: '🎭', load: 0, max: 200, status: 'IDLE', speed: 1.0 },
+                    { id: 3, name: '皇家重载', type: 'mixed', icon: '📦', load: 0, max: 800, status: 'IDLE', speed: 0.6 }
                 ],
                 scene: 'human', tab: 'raw', mouse: { x: 0, y: 0, gx: 0, gy: 0 }, drag: null
             },
             config: {
-                human: { farm: { icon: '🌾', size: [2,2], cat: 'raw', cost: { wood: 50 }, prod: { out: 'food', val: 10 } }, sawmill: { icon: '🪚', size: [1,1], cat: 'raw', cost: { stone: 80 }, prod: { out: 'wood', val: 6 } }, quarry: { icon: '⛏️', size: [2,1], cat: 'raw', cost: { wood: 120 }, prod: { out: 'stone', val: 4 } } },
-                demon: { pit: { icon: '🥩', size: [2,2], cat: 'raw', cost: { bone: 50 }, prod: { out: 'meat', val: 10 } }, altar: { icon: '💀', size: [1,1], cat: 'raw', cost: { mana: 80 }, prod: { out: 'bone', val: 6 } }, rift: { icon: '🌀', size: [2,1], cat: 'raw', cost: { bone: 120 }, prod: { out: 'mana', val: 4 } } }
+                human: { 
+                    house: { icon: '🏠', name: '住宅 (House)', size: [2,2], cat: 'raw', cost: { wood: 50 }, pop: 10, prod: { out: 'food', val: 0 } },
+                    farm: { icon: '🌾', name: '农场 (Farm)', size: [2,2], cat: 'raw', cost: { wood: 50 }, prod: { out: 'food', val: 10 } }, 
+                    sawmill: { icon: '🪚', name: '锯木厂 (Sawmill)', size: [1,1], cat: 'raw', cost: { stone: 80 }, prod: { out: 'wood', val: 6 } }, 
+                    quarry: { icon: '⛏️', name: '采石场 (Quarry)', size: [2,1], cat: 'raw', cost: { wood: 120 }, prod: { out: 'stone', val: 4 } },
+                    road: { icon: '🛣️', name: '道路 (Cobblestone Road)', size: [1,1], cat: 'civil', cost: { stone: 5 }, prod: { out: 'wood', val: 0 } }
+                },
+                demon: { 
+                    pit: { icon: '🥩', name: '孵化巢 (Pit)', size: [2,2], cat: 'raw', cost: { bone: 50 }, prod: { out: 'meat', val: 10 } }, 
+                    altar: { icon: '💀', name: '祭坛 (Altar)', size: [1,1], cat: 'raw', cost: { mana: 80 }, prod: { out: 'bone', val: 6 } }, 
+                    rift: { icon: '🌀', name: '裂隙 (Rift)', size: [2,1], cat: 'raw', cost: { bone: 120 }, prod: { out: 'mana', val: 4 } },
+                    path: { icon: '🔥', name: '熔岩径 (Lava Path)', size: [1,1], cat: 'civil', cost: { bone: 5 }, prod: { out: 'meat', val: 0 } }
+                }
             },
             init() {
                 this.canvas = document.getElementById('gameCanvas');
@@ -355,6 +375,7 @@
                     item.innerHTML = `
                         ${bgUrl ? `<img src="${bgUrl}" class="absolute inset-0 w-full h-full object-cover opacity-20 grayscale">` : ''}
                         <span class="text-3xl z-10">${b.icon}</span>
+                        <span class="text-[8px] z-10 mt-1 opacity-60 font-bold">${b.name.split(' ')[0]}</span>
                     `;
                     item.onclick = () => { this.state[s].selected = (this.state[s].selected === k) ? null : k; this.renderBldGrid(); };
                     el.appendChild(item);
@@ -394,6 +415,7 @@
                 }
                 for(let r in b.cost) if (cur[r] < b.cost[r]) return;
                 for(let r in b.cost) cur[r] -= b.cost[r];
+                if (b.pop) cur.pop += b.pop; // Housing logic: increase capacity
                 cur.placed.push({ type, gx, gy }); this.updateUI();
             },
             demolish() {
@@ -404,7 +426,9 @@
                     return gx >= p.gx && gx < p.gx + pb.size[0] && gy >= p.gy && gy < p.gy + pb.size[1];
                 });
                 if (idx !== -1) { 
-                    const p = cur.placed[idx]; for(let r in this.config[s][p.type].cost) cur[r] += Math.floor(this.config[s][p.type].cost[r] * 0.5);
+                    const p = cur.placed[idx]; const b = this.config[s][p.type];
+                    for(let r in b.cost) cur[r] += Math.floor(b.cost[r] * 0.5);
+                    if (b.pop) cur.pop -= b.pop; // Decrease capacity on demolish
                     cur.placed.splice(idx, 1); this.updateUI(); 
                 }
             },
@@ -420,7 +444,9 @@
                 
                 activeShips.forEach(ship => {
                     ship.status = 'DISPATCHING';
-                    this.notify(`舰队 [${ship.name}] 已离港，满载战略物资！`);
+                    const duration = 5000 / ship.speed; // Speed affects arrival time
+                    this.notify(`舰队 [${ship.name}] 已离港，满载战略物资！预期抵达：${(duration/1000).toFixed(1)}s`);
+                    
                     setTimeout(() => {
                         const key = this.state.scene === 'human' ? 'hForce' : 'dForce';
                         this.state.battle[key] += ship.load;
@@ -428,12 +454,13 @@
                         ship.status = 'RETURNING';
                         this.notify(`舰队 [${ship.name}] 成功抵达前线，天平发生偏移！`);
                         this.updateUI();
+                        
                         setTimeout(() => {
                             ship.status = 'IDLE';
                             this.notify(`舰队 [${ship.name}] 已安全返航。`);
                             this.updateUI();
-                        }, 5000);
-                    }, 3000);
+                        }, duration); // Return takes same time
+                    }, duration);
                 });
                 this.updateUI();
             },
@@ -478,10 +505,21 @@
                 cur.placed.forEach(p => {
                     const b = this.config[s][p.type];
                     const sx = p.gx*TILE - cam.x, sy = p.gy*TILE - cam.y;
-                    ctx.fillStyle = '#2a241e'; ctx.fillRect(sx+2, sy+2, b.size[0]*TILE-4, b.size[1]*TILE-4);
-                    ctx.strokeStyle = '#c9a84c44'; ctx.strokeRect(sx+4, sy+4, b.size[0]*TILE-8, b.size[1]*TILE-8);
-                    ctx.fillStyle = 'white'; ctx.font = '28px serif'; ctx.textAlign = 'center';
-                    ctx.fillText(b.icon, sx + (b.size[0]*TILE)/2, sy + (b.size[1]*TILE)/2 + 10);
+                    
+                    // Road rendering logic
+                    if (p.type === 'road' || p.type === 'path') {
+                        ctx.fillStyle = (p.type === 'road') ? '#666' : '#933'; // Cobblestone vs Lava Path
+                        ctx.fillRect(sx + 2, sy + 2, TILE - 4, TILE - 4);
+                        // Connect dots for roads (simple cross-like appearance)
+                        ctx.fillStyle = (p.type === 'road') ? '#888' : '#f60';
+                        ctx.fillRect(sx + TILE/2 - 4, sy + 4, 8, TILE - 8);
+                        ctx.fillRect(sx + 4, sy + TILE/2 - 4, TILE - 8, 8);
+                    } else {
+                        ctx.fillStyle = '#2a241e'; ctx.fillRect(sx+2, sy+2, b.size[0]*TILE-4, b.size[1]*TILE-4);
+                        ctx.strokeStyle = '#c9a84c44'; ctx.strokeRect(sx+4, sy+4, b.size[0]*TILE-8, b.size[1]*TILE-8);
+                        ctx.fillStyle = 'white'; ctx.font = '28px serif'; ctx.textAlign = 'center';
+                        ctx.fillText(b.icon, sx + (b.size[0]*TILE)/2, sy + (b.size[1]*TILE)/2 + 10);
+                    }
                 });
                 // Preview
                 if (cur.selected) {
@@ -537,7 +575,8 @@
                         <div class="convoy-ship ${ship.load > 0 ? 'active' : ''} ${ship.status !== 'IDLE' ? 'opacity-50 pointer-events-none' : ''}" onclick="Game.toggleShip(${ship.id})">
                             <div class="res-tag">${ship.load > 0 ? 'LOADED' : 'READY'}</div>
                             <div class="ship-icon">${ship.icon}</div>
-                            <div class="stat-font text-[10px] mt-4">${ship.name}</div>
+                            <div class="stat-font text-[10px] mt-2">${ship.name}</div>
+                            <div class="text-[8px] text-gold/40 mb-2">航速: ${ship.speed.toFixed(1)}x | 载重: ${ship.max}</div>
                             <div class="ship-status">${ship.status}</div>
                             <div class="ship-load-indicator">
                                 <div class="ship-load-fill" style="width: ${(ship.load/ship.max)*100}%"></div>
@@ -561,9 +600,24 @@
             loop() {
                 setInterval(() => {
                     const h = this.state.human, d = this.state.demon, b = this.state.battle;
+                    
+                    // Consumption & Unrest Logic
                     h.food -= h.pop * 0.04; d.meat -= d.pop * 0.04;
-                    h.placed.forEach(p => h[this.config.human[p.type].prod.out] += this.config.human[p.type].prod.val);
-                    d.placed.forEach(p => d[this.config.demon[p.type].prod.out] += this.config.demon[p.type].prod.val);
+                    
+                    // Production
+                    h.placed.forEach(p => {
+                        const prod = this.config.human[p.type].prod;
+                        h[prod.out] += prod.val;
+                    });
+                    d.placed.forEach(p => {
+                        const prod = this.config.demon[p.type].prod;
+                        d[prod.out] += prod.val;
+                    });
+
+                    // Happiness Impact (Unrest)
+                    if (h.food < 0) { h.food = 0; this.notify("⚠️ 警告：粮食耗尽，人类行省爆发骚乱！"); }
+                    if (d.meat < 0) { d.meat = 0; this.notify("🔥 警告：血肉匮乏，深渊奴隶开始反叛！"); }
+
                     b.hForce += (Math.random()*4 - 2); b.dForce += (Math.random()*4 - 2);
                     this.updateUI();
                 }, 1000);
