@@ -1,0 +1,41 @@
+[gd_scene format=3 uid="uid://6u8df61u26af"]
+
+[ext_resource type="Script" uid="uid://dlsopk6gn8biv" path="res://scripts/ui/TechItem.gd" id="1_techitem_script"]
+[ext_resource type="Texture2D" uid="uid://e01hcd6lnqn4" path="res://icon.svg" id="2_xy3je"]
+
+[node name="TechItem" type="Panel" unique_id=1339890006]
+custom_minimum_size = Vector2(0, 100)
+script = ExtResource("1_techitem_script")
+
+[node name="HBoxContainer" type="HBoxContainer" parent="." unique_id=677768716]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="InfoVBox" type="VBoxContainer" parent="HBoxContainer" unique_id=2033992061]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="NameLabel" type="Label" parent="HBoxContainer/InfoVBox" unique_id=63088081]
+layout_mode = 2
+text = "科技名称"
+
+[node name="DescLabel" type="Label" parent="HBoxContainer/InfoVBox" unique_id=914984128]
+layout_mode = 2
+text = "科技描述"
+
+[node name="CostLabel" type="Label" parent="HBoxContainer/InfoVBox" unique_id=1592023516]
+layout_mode = 2
+text = "成本: 0 RP"
+
+[node name="UnlockButton" type="Button" parent="HBoxContainer" unique_id=1532841973]
+layout_mode = 2
+size_flags_vertical = 4
+text = "解锁"
+
+[node name="Icon" type="Sprite2D" parent="." unique_id=1860674414]
+position = Vector2(-4, 1)
+texture = ExtResource("2_xy3je")

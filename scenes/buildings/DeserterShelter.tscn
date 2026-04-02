@@ -1,0 +1,13 @@
+[gd_scene format=3 uid="uid://dp6122d46e33u"]
+
+[ext_resource type="Script" path="res://scripts/buildings/DeserterShelter.gd" id="1_4qg6t"]
+
+[node name="DeserterShelter" type="Node2D"]
+script = ExtResource("1_4qg6t")
+
+[node name="ColorRect" type="ColorRect" parent="."]
+offset_left = -32.0
+offset_top = -32.0
+offset_right = 32.0
+offset_bottom = 32.0
+color = Color(0.188235, 0.501961, 0.443137, 1) # A greenish-blue color

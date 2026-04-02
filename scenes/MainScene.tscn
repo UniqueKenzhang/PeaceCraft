@@ -1,0 +1,246 @@
+[gd_scene format=3 uid="uid://b5xb0ei2cgu5i"]
+
+[ext_resource type="Script" uid="uid://k4o1fly24ia0" path="res://scripts/MainScene.gd" id="1_abcde"]
+[ext_resource type="PackedScene" uid="uid://c1d2e3f4g5h6" path="res://scenes/ui/TechTree.tscn" id="2_abcde"]
+[ext_resource type="PackedScene" uid="uid://btvu5g0e03ybf" path="res://scenes/GridMap.tscn" id="3_gridmap"]
+[ext_resource type="PackedScene" uid="uid://bhwgqq63s5ql" path="res://scenes/ui/TransportPanel.tscn" id="4_transport"]
+
+[node name="MainScene" type="Node2D" unique_id=890460590]
+script = ExtResource("1_abcde")
+
+[node name="HumanRealm" type="Node2D" parent="." unique_id=159452768]
+
+[node name="HumanGridMap" parent="HumanRealm" unique_id=269528278 instance=ExtResource("3_gridmap")]
+
+[node name="AbyssRealm" type="Node2D" parent="." unique_id=1527382445]
+visible = false
+
+[node name="AbyssGridMap" parent="AbyssRealm" unique_id=1994716659 instance=ExtResource("3_gridmap")]
+
+[node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=888888888]
+
+[node name="RealmSwitchButton" type="Button" parent="CanvasLayer" unique_id=653314104]
+offset_left = 800.0
+offset_top = 40.0
+offset_right = 900.0
+offset_bottom = 80.0
+text = "切换国度"
+
+[node name="BalanceLabel" type="Label" parent="CanvasLayer" unique_id=1744776682]
+offset_left = 40.0
+offset_top = 40.0
+offset_right = 240.0
+offset_bottom = 80.0
+text = "Balance: 0.00"
+vertical_alignment = 1
+
+[node name="DeserterLabel" type="Label" parent="CanvasLayer" unique_id=482675910]
+offset_left = 260.0
+offset_top = 40.0
+offset_right = 560.0
+offset_bottom = 80.0
+text = "Deserters: A-0, H-0"
+vertical_alignment = 1
+
+[node name="GlobalButtons" type="HBoxContainer" parent="CanvasLayer" unique_id=2133062382]
+offset_left = 900.0
+offset_top = 40.0
+offset_right = 1000.0
+offset_bottom = 80.0
+
+[node name="TechButton" type="Button" parent="CanvasLayer/GlobalButtons" unique_id=1768886416]
+layout_mode = 2
+text = "科技"
+
+[node name="ResearchPointsLabel" type="Label" parent="CanvasLayer" unique_id=482675911]
+offset_left = 580.0
+offset_top = 40.0
+offset_right = 880.0
+offset_bottom = 80.0
+text = "RP: 0.0"
+vertical_alignment = 1
+
+[node name="ResearchRateLabel" type="Label" parent="CanvasLayer" unique_id=482675912]
+offset_left = 580.0
+offset_top = 60.0
+offset_right = 880.0
+offset_bottom = 100.0
+text = "(+0.0/s)"
+vertical_alignment = 1
+
+[node name="VBoxContainer" type="VBoxContainer" parent="CanvasLayer" unique_id=1028910070]
+offset_left = 40.0
+offset_top = 100.0
+offset_right = 340.0
+offset_bottom = 230.0
+
+[node name="Label" type="Label" parent="CanvasLayer/VBoxContainer" unique_id=455432123]
+layout_mode = 2
+text = "当前指令："
+
+[node name="OrderTargetLabel" type="Label" parent="CanvasLayer/VBoxContainer" unique_id=455432124]
+layout_mode = 2
+text = "目标: "
+
+[node name="OrderRequirementsLabel" type="Label" parent="CanvasLayer/VBoxContainer" unique_id=455432125]
+layout_mode = 2
+text = "需求: "
+autowrap_mode = 2
+
+[node name="OrderTimeLimitLabel" type="Label" parent="CanvasLayer/VBoxContainer" unique_id=455432126]
+layout_mode = 2
+text = "时限: "
+
+[node name="FulfillOrderButton" type="Button" parent="CanvasLayer/VBoxContainer" unique_id=455432127]
+layout_mode = 2
+text = "完成指令"
+
+[node name="GameOverLabel" type="Label" parent="CanvasLayer" unique_id=670209163]
+visible = false
+modulate = Color(1, 0, 0, 1)
+offset_left = 40.0
+offset_top = 350.0
+offset_right = 240.0
+offset_bottom = 380.0
+text = "GAME OVER"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="RestartButton" type="Button" parent="CanvasLayer" unique_id=1580613713]
+visible = false
+offset_left = 40.0
+offset_top = 400.0
+offset_right = 240.0
+offset_bottom = 430.0
+text = "Restart"
+
+[node name="WarehouseLabel" type="Label" parent="CanvasLayer" unique_id=1888155989]
+offset_left = 40.0
+offset_top = 240.0
+offset_right = 340.0
+offset_bottom = 450.0
+text = "Warehouse:"
+autowrap_mode = 2
+
+[node name="PopulationContainer" type="VBoxContainer" parent="CanvasLayer" unique_id=1843313775]
+offset_left = 40.0
+offset_top = 460.0
+offset_right = 340.0
+offset_bottom = 580.0
+
+[node name="HumanPopulationLabel" type="Label" parent="CanvasLayer/PopulationContainer" unique_id=700000001]
+layout_mode = 2
+text = "Human Population:"
+
+[node name="AbyssPopulationLabel" type="Label" parent="CanvasLayer/PopulationContainer" unique_id=700000002]
+layout_mode = 2
+text = "Abyss Population:"
+
+[node name="BuildMenusContainer" type="VBoxContainer" parent="CanvasLayer" unique_id=-273397177]
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 40.0
+offset_top = -150.0
+offset_right = -40.0
+offset_bottom = -30.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="HumanBuildLabel" type="Label" parent="CanvasLayer/BuildMenusContainer" unique_id=-269621516]
+layout_mode = 2
+text = "Human Buildings"
+
+[node name="HumanBuildMenu" type="HBoxContainer" parent="CanvasLayer/BuildMenusContainer" unique_id=-1548154451]
+layout_mode = 2
+
+[node name="BuildFarmButton" type="Button" parent="CanvasLayer/BuildMenusContainer/HumanBuildMenu" unique_id=-1514945619]
+layout_mode = 2
+text = "Build Farm"
+
+[node name="BuildLumberjackButton" type="Button" parent="CanvasLayer/BuildMenusContainer/HumanBuildMenu" unique_id=-1038936377]
+layout_mode = 2
+text = "Build Lumberjack"
+
+[node name="BuildArmoryButton" type="Button" parent="CanvasLayer/BuildMenusContainer/HumanBuildMenu" unique_id=-1038936378]
+layout_mode = 2
+text = "Build Armory"
+
+[node name="BuildWorkshopButton" type="Button" parent="CanvasLayer/BuildMenusContainer/HumanBuildMenu" unique_id=-1038936379]
+layout_mode = 2
+text = "Build Workshop"
+
+[node name="BuildWarehouseButton" type="Button" parent="CanvasLayer/BuildMenusContainer/HumanBuildMenu" unique_id=-1038936384]
+layout_mode = 2
+text = "Build Warehouse"
+
+[node name="BuildPortalButton" type="Button" parent="CanvasLayer/BuildMenusContainer/HumanBuildMenu" unique_id=-1038936380]
+layout_mode = 2
+text = "Build Portal"
+
+[node name="BuildHousingButton" type="Button" parent="CanvasLayer/BuildMenusContainer/HumanBuildMenu" unique_id=-1038936381]
+layout_mode = 2
+text = "Build Housing"
+
+[node name="BuildFoodProviderButton" type="Button" parent="CanvasLayer/BuildMenusContainer/HumanBuildMenu" unique_id=-1038936382]
+layout_mode = 2
+text = "Build Food Provider"
+
+[node name="BuildRoadButton" type="Button" parent="CanvasLayer/BuildMenusContainer/HumanBuildMenu" unique_id=-1038936383]
+layout_mode = 2
+text = "Build Road"
+
+[node name="AbyssBuildLabel" type="Label" parent="CanvasLayer/BuildMenusContainer" unique_id=-114543213]
+layout_mode = 2
+text = "Abyss Buildings"
+
+[node name="AbyssBuildMenu" type="HBoxContainer" parent="CanvasLayer/BuildMenusContainer" unique_id=-71119375]
+layout_mode = 2
+
+[node name="BuildFungusCaveButton" type="Button" parent="CanvasLayer/BuildMenusContainer/AbyssBuildMenu" unique_id=-24762437]
+layout_mode = 2
+text = "Build Fungus Cave"
+
+[node name="BuildSulfurMineButton" type="Button" parent="CanvasLayer/BuildMenusContainer/AbyssBuildMenu" unique_id=-841653408]
+layout_mode = 2
+text = "Build Sulfur Mine"
+
+[node name="BuildSmugglingDockButton" type="Button" parent="CanvasLayer/BuildMenusContainer/AbyssBuildMenu" unique_id=-841653410]
+layout_mode = 2
+text = "Build Smuggling Dock"
+
+[node name="BuildLairButton" type="Button" parent="CanvasLayer/BuildMenusContainer/AbyssBuildMenu" unique_id=-841653409]
+layout_mode = 2
+text = "Build Lair"
+
+[node name="TransportButton" type="Button" parent="CanvasLayer" unique_id=736971852]
+offset_left = 800.0
+offset_top = 80.0
+offset_right = 900.0
+offset_bottom = 120.0
+text = "运输物资"
+
+[node name="PenaltyLabel" type="Label" parent="CanvasLayer" unique_id=432154321]
+visible = false
+modulate = Color(1, 0, 0, 1)
+offset_left = 376.0
+offset_top = 300.0
+offset_right = 776.0
+offset_bottom = 348.0
+theme_override_font_sizes/font_size = 32
+text = "你的伎俩被识破了！"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="PenaltyTimer" type="Timer" parent="CanvasLayer" unique_id=432154322]
+one_shot = true
+
+[node name="TransportPanel" parent="CanvasLayer" unique_id=260083760 instance=ExtResource("4_transport")]
+offset_left = 216.0
+offset_top = -32.0
+offset_right = 216.0
+offset_bottom = -32.0
+
+[node name="TechTree" parent="CanvasLayer" unique_id=937686377 instance=ExtResource("2_abcde")]
+visible = false

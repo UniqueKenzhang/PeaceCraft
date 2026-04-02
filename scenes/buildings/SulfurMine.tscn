@@ -1,0 +1,18 @@
+[gd_scene format=3 uid="uid://d2e3f4g5h6i7"]
+
+[ext_resource type="Script" path="res://scripts/buildings/ProductionBuilding.gd" id="1_sulfur_mine_script"]
+[ext_resource type="Texture2D" uid="uid://c6w08b0ke23vj" path="res://icon.svg" id="2_sprite"]
+
+[node name="SulfurMine" type="Node2D"]
+script = ExtResource("1_sulfur_mine_script")
+# Custom properties for the Sulfur Mine
+faction = "Abyss"
+output_resource = "Sulfur"
+output_quantity = 1
+production_cycle_time = 4.0
+
+[node name="Timer" type="Timer" parent="."]
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+modulate = Color(0.8, 0.2, 0.9, 1) # Make it purple to distinguish it
+texture = ExtResource("2_sprite")

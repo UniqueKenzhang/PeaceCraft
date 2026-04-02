@@ -1,0 +1,11 @@
+[gd_resource type="TileSet" format=3 uid="uid://bjoyyndjdpme6"]
+
+[ext_resource type="Texture2D" uid="uid://c6r570ksrcw7h" path="res://kenney_tiny-town/Tiles/tile_0043.png" id="1_xpkeb"]
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_bx3vp"]
+texture = ExtResource("1_xpkeb")
+0:0/0 = 0
+
+[resource]
+physics_layer_0/collision_layer = 1
+sources/0 = SubResource("TileSetAtlasSource_bx3vp")

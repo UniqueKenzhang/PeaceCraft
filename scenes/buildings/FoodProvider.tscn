@@ -1,0 +1,21 @@
+[gd_scene format=3 uid="uid://food_provider1"]
+
+[ext_resource type="Script" path="res://scripts/buildings/NeedsProvider.gd" id="1_needs_script"]
+[ext_resource type="Texture2D" uid="uid://e01hcd6lnqn4" path="res://icon.svg" id="2_sprite"]
+
+[node name="FoodProvider" type="Node2D" unique_id=960000001]
+script = ExtResource("1_needs_script")
+need_type = 0
+faction = "Human"
+capacity = 10
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=960000002]
+texture = ExtResource("2_sprite")
+scale = Vector2(2, 2)
+modulate = Color(0.4, 0.8, 0.4, 1)
+
+[node name="Label" type="Label" parent="." unique_id=960000003]
+offset_top = -40.0
+offset_right = 40.0
+text = "食物供应"
+horizontal_alignment = 1

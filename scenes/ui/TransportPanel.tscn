@@ -1,0 +1,56 @@
+[gd_scene format=3 uid="uid://bhwgqq63s5ql"]
+
+[ext_resource type="Script" uid="uid://ckp2eg8py2dj7" path="res://scripts/ui/TransportPanel.gd" id="1_transport_script"]
+
+[node name="TransportPanel" type="Control" unique_id=415570496]
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("1_transport_script")
+
+[node name="Background" type="ColorRect" parent="." unique_id=1902783549]
+layout_mode = 0
+offset_left = 300.0
+offset_top = 200.0
+offset_right = 700.0
+offset_bottom = 500.0
+color = Color(0.1, 0.1, 0.15, 0.9)
+
+[node name="VBoxContainer" type="VBoxContainer" parent="." unique_id=790221836]
+layout_mode = 0
+offset_left = 320.0
+offset_top = 220.0
+offset_right = 680.0
+offset_bottom = 480.0
+
+[node name="FromFactionLabel" type="Label" parent="VBoxContainer" unique_id=1048258535]
+layout_mode = 2
+text = "从: Human"
+
+[node name="ToFactionLabel" type="Label" parent="VBoxContainer" unique_id=1313915914]
+layout_mode = 2
+text = "到: Abyss"
+
+[node name="ResourceLabel" type="Label" parent="VBoxContainer" unique_id=1621597542]
+layout_mode = 2
+text = "资源名称:"
+
+[node name="ResourceNameEdit" type="LineEdit" parent="VBoxContainer" unique_id=1851521938]
+layout_mode = 2
+placeholder_text = "输入资源名称"
+
+[node name="QuantityLabel" type="Label" parent="VBoxContainer" unique_id=636658571]
+layout_mode = 2
+text = "数量:"
+
+[node name="QuantitySpin" type="SpinBox" parent="VBoxContainer" unique_id=617476059]
+layout_mode = 2
+min_value = 1.0
+value = 1.0
+
+[node name="TransportButton" type="Button" parent="VBoxContainer" unique_id=1511441204]
+layout_mode = 2
+text = "开始运输"
+
+[node name="StatusLabel" type="Label" parent="VBoxContainer" unique_id=957603796]
+layout_mode = 2
+autowrap_mode = 2

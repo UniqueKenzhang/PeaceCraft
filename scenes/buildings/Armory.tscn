@@ -1,0 +1,21 @@
+[gd_scene format=3 uid="uid://c1a2b3d4e5f6"]
+
+[ext_resource type="Script" path="res://scripts/buildings/ProductionBuilding.gd" id="1_armory_script"]
+[ext_resource type="Texture2D" path="res://icon.svg" id="2_sprite"]
+
+[node name="Armory" type="Node2D"]
+script = ExtResource("1_armory_script")
+faction = "Human"
+production_cycle_time = 10.0
+output_resource = "True Armaments"
+output_quantity = 1
+inputs = {
+"Wood": 5,
+"Wheat": 5
+}
+
+[node name="Timer" type="Timer" parent="."]
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+modulate = Color(0.8, 0.1, 0.1, 1) # Reddish color
+texture = ExtResource("2_sprite")

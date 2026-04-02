@@ -1,0 +1,17 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/buildings/ProductionBuilding.gd" id="1_fungus_cave_script"]
+[ext_resource type="Texture2D" path="res://icon.svg" id="2_sprite"]
+
+[node name="FungusCave" type="Node2D"]
+script = ExtResource("1_fungus_cave_script")
+faction = "Abyss"
+output_resource = "Shadow-shroom"
+output_quantity = 1
+production_cycle_time = 6.0
+
+[node name="Timer" type="Timer" parent="."]
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+modulate = Color(0.8, 0.6, 0.9, 1)
+texture = ExtResource("2_sprite")

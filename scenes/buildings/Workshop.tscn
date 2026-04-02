@@ -1,0 +1,21 @@
+[gd_scene format=3 uid="uid://d2e3f4g5h6i8"]
+
+[ext_resource type="Script" path="res://scripts/buildings/ProductionBuilding.gd" id="1_workshop_script"]
+[ext_resource type="Texture2D" path="res://icon.svg" id="2_sprite"]
+
+[node name="Workshop" type="Node2D"]
+script = ExtResource("1_workshop_script")
+faction = "Human"
+production_cycle_time = 8.0
+output_resource = "Counterfeit Gear"
+output_quantity = 1
+inputs = {
+"Wood": 2,
+"Wheat": 1
+}
+
+[node name="Timer" type="Timer" parent="."]
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+modulate = Color(0.6, 0.6, 0.6, 1) # Grayish color
+texture = ExtResource("2_sprite")

@@ -1,0 +1,16 @@
+[gd_scene format=3 uid="uid://2nd4c0o464d6"]
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial"]
+emission_shape = 3
+emission_box_extents = Vector3(30, 30, 0)
+gravity = Vector3(0, -50, 0)
+scale_min = 0.3
+scale_max = 0.8
+color = Color(0.3, 1, 0.5, 0.8)
+
+[node name="PlacementParticles" type="GPUParticles2D" unique_id=215187979]
+emitting = false
+amount = 30
+lifetime = 0.8
+one_shot = true
+process_material = SubResource("ParticleProcessMaterial")

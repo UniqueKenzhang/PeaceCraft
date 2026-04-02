@@ -1,0 +1,17 @@
+[gd_scene format=3 uid="uid://road1"]
+
+[ext_resource type="Script" uid="uid://cxf4igwy2tv8y" path="res://scripts/buildings/Road.gd" id="1_road_script"]
+
+[node name="Road" type="Node2D" unique_id=970000001]
+script = ExtResource("1_road_script")
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=970000002]
+modulate = Color(0.8, 0.8, 0.8, 1)
+scale = Vector2(1.5, 1.5)
+
+[node name="Label" type="Label" parent="." unique_id=970000003]
+visible = false
+offset_top = -40.0
+offset_right = 40.0
+text = "道路"
+horizontal_alignment = 1

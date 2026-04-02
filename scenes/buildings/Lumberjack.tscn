@@ -1,0 +1,16 @@
+[gd_scene format=4 uid="uid://e8gag0h1i2j3"]
+
+[ext_resource type="Script" uid="uid://bsmamqv5uaxew" path="res://scripts/buildings/ProductionBuilding.gd" id="1_lumberjack_script"]
+[ext_resource type="TileSet" uid="uid://c5g3jo57m4jao" path="res://assets/map_item_tile_set.tres" id="2_j58fm"]
+
+[node name="Lumberjack" type="Node2D" unique_id=1787409936]
+script = ExtResource("1_lumberjack_script")
+output_resource = "Wood"
+output_quantity = 10
+
+[node name="Timer" type="Timer" parent="." unique_id=1694878155]
+
+[node name="TileMapLayer" type="TileMapLayer" parent="." unique_id=1197280664]
+position = Vector2(8, 8)
+tile_map_data = PackedByteArray("AAD9//7/AQAEAAQAAAD9////AQAEAAUAAAD9/wAAAQAEAAYAAAD+//7/AQAFAAQAAAD+////AQAFAAUAAAD+/wAAAQAFAAYAAAD///7/AQAGAAQAAAD/////AQAGAAUAAAD//wAAAQAFAAcAAAAAAP7/AQAHAAQAAAAAAP//AQAHAAUAAAAAAAAAAQAHAAYAAAABAP7/AQAKAAgAAAABAAAAAQAHAAoAAAABAP//AQAJAAQAAAA=")
+tile_set = ExtResource("2_j58fm")

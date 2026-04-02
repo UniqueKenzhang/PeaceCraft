@@ -1,0 +1,21 @@
+[gd_scene format=3 uid="uid://b1c2d3e4f5g6"]
+
+[ext_resource type="Script" path="res://scripts/buildings/ProductionBuilding.gd" id="1_lair_script"]
+[ext_resource type="Texture2D" path="res://icon.svg" id="2_sprite"]
+
+[node name="Lair" type="Node2D"]
+script = ExtResource("1_lair_script")
+faction = "Abyss"
+production_cycle_time = 12.0
+output_resource = "Whimsical Subversion"
+output_quantity = 1
+inputs = {
+"Sulfur": 3,
+"Shadow-shroom": 3
+}
+
+[node name="Timer" type="Timer" parent="."]
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+modulate = Color(0.1, 0.8, 0.8, 1) # Cyan color
+texture = ExtResource("2_sprite")
